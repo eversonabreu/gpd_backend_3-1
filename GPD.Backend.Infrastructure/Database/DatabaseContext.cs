@@ -1,13 +1,18 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
+using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 
 namespace GPD.Backend.Infrastructure.Database
 {
     public class DatabaseContext : DbContext, IDesignTimeDbContextFactory<DatabaseContext>
     {
+        public DatabaseContext() { }
+
         public DatabaseContext(DbContextOptions options) : base(options) { }
 
         public DatabaseContext CreateDbContext(string[] args)
@@ -35,6 +40,21 @@ namespace GPD.Backend.Infrastructure.Database
             return new DatabaseContext(builderContext.Options);
         }
 
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+            Assembly currentAssembly = typeof(DatabaseContext).Assembly;
+
+            IEnumerable<Type> efMappingTypes = currentAssembly.GetTypes().Where(tp =>
+                tp.FullName.StartsWith("GPD.Backend.Infrastructure.Database.Mappings.") &&
+                tp.FullName.EndsWith("Mapping"));
+
+            foreach (var map in efMappingTypes.Select(Activator.CreateInstance))
+            {
+                modelBuilder.ApplyConfiguration((dynamic)map);
+            }
+        }
+
         public static string GetDatabaseStringConnection(IConfiguration configuration)
         {
             string connectionDatabaseStringBase = configuration["DatabaseConnection"];
@@ -46,10 +66,9 @@ namespace GPD.Backend.Infrastructure.Database
             string pooling = configuration["DatabaseConnectionSettings:Pooling"];
             string minPoolSize = configuration["DatabaseConnectionSettings:MinPoolSize"];
             string maxPoolSize = configuration["DatabaseConnectionSettings:MaxPoolSize"];
-            string connectionLifetime = configuration["DatabaseConnectionSettings:ConnectionLifetime"];
 
             string connectionStringDatabase = string.Format($"{connectionDatabaseStringBase}", userId,
-                                                            password, host, port, database, pooling, minPoolSize, maxPoolSize, connectionLifetime);
+                                                            password, host, port, database, pooling, minPoolSize, maxPoolSize);
             return connectionStringDatabase;
         }
     }

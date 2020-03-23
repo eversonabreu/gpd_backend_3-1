@@ -80,7 +80,7 @@ namespace GPD.Backend.Api
             });
         }
 
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, DatabaseContext databaseContext)
         {
             if (env.IsDevelopment())
             {
@@ -102,6 +102,8 @@ namespace GPD.Backend.Api
             app.UseStatusCodePages();
             app.UseSwagger();
             app.UseSwaggerUI(swg => { swg.SwaggerEndpoint("/swagger/v1/swagger.json", "GPD - Gerenciamento pelas diretrizes"); });
+
+            databaseContext.Database.Migrate();
         }
     }
 }

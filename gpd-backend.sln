@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GPD.Backend.Api", "GPD.Back
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GPD.Backend.Infrastructure", "GPD.Backend.Infrastructure\GPD.Backend.Infrastructure.csproj", "{DCDD008A-C99F-478F-987F-54531D3FFCDC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GPD.Backend.Domain", "GPD.Backend.Domain\GPD.Backend.Domain.csproj", "{6D3EFF70-3BCB-4F16-9642-E383D100FB77}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{DCDD008A-C99F-478F-987F-54531D3FFCDC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DCDD008A-C99F-478F-987F-54531D3FFCDC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DCDD008A-C99F-478F-987F-54531D3FFCDC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6D3EFF70-3BCB-4F16-9642-E383D100FB77}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6D3EFF70-3BCB-4F16-9642-E383D100FB77}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6D3EFF70-3BCB-4F16-9642-E383D100FB77}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6D3EFF70-3BCB-4F16-9642-E383D100FB77}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
