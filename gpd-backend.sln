@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29911.84
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GPD.Backend.Api", "GPD.Backend.Api\GPD.Backend.Api.csproj", "{6CB0EF4D-9EBD-45CC-BB79-C8B830FE2818}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GPD.Backend.Infrastructure", "GPD.Backend.Infrastructure\GPD.Backend.Infrastructure.csproj", "{DCDD008A-C99F-478F-987F-54531D3FFCDC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6CB0EF4D-9EBD-45CC-BB79-C8B830FE2818}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6CB0EF4D-9EBD-45CC-BB79-C8B830FE2818}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6CB0EF4D-9EBD-45CC-BB79-C8B830FE2818}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6CB0EF4D-9EBD-45CC-BB79-C8B830FE2818}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DCDD008A-C99F-478F-987F-54531D3FFCDC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DCDD008A-C99F-478F-987F-54531D3FFCDC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DCDD008A-C99F-478F-987F-54531D3FFCDC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DCDD008A-C99F-478F-987F-54531D3FFCDC}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {DA567512-6FC5-4968-B15F-03F646DD5D3E}
+	EndGlobalSection
+EndGlobal
