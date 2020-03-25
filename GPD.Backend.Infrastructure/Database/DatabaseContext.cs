@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
@@ -14,6 +15,8 @@ namespace GPD.Backend.Infrastructure.Database
         public DatabaseContext() { }
 
         public DatabaseContext(DbContextOptions options) : base(options) { }
+
+        public static DatabaseContext CreateContext(DatabaseFacade databaseFacade) => new DatabaseContext().CreateDbContext(new string[] { databaseFacade.GetDbConnection().ConnectionString });
 
         public DatabaseContext CreateDbContext(string[] args)
         {

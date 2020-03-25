@@ -29,6 +29,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\GPD.Backend.Infrastructure\GPD.Backend.Infrastructure.csproj" />
+    <ProjectReference Include="..\GPD.Commom\GPD.Commom.csproj" />
   </ItemGroup>
 
 </Project>

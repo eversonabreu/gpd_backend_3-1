@@ -10,6 +10,7 @@ using System.IO;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
 using System.Collections.Generic;
+using GPD.Backend.Domain.IoC;
 
 namespace GPD.Backend.Api
 {
@@ -78,6 +79,8 @@ namespace GPD.Backend.Api
                 };
                 swg.AddSecurityRequirement(requirement);
             });
+
+            Services.LoadRepositories(services, typeof(DatabaseContext).Assembly);
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, DatabaseContext databaseContext)

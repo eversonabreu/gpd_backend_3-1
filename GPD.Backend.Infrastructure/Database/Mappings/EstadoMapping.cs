@@ -1,5 +1,5 @@
-﻿using GPD.Backend.Domain.Consts;
-using GPD.Backend.Domain.Entities;
+﻿using GPD.Backend.Domain.Entities;
+using GPD.Commom.Consts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

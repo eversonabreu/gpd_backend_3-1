@@ -1,4 +1,4 @@
-﻿namespace GPD.Backend.Domain.Consts
+﻿namespace GPD.Commom.Consts
 {
     public static class EstadoConsts
     {
