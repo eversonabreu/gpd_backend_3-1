@@ -9,6 +9,8 @@ namespace GPD.Backend.Domain.Entities
 
         public string Descricao { get; set; }
 
+        public uint Codigo { get; set; }
+
         public ICollection<PerfilUsuario> PerfilUsuarios { get; set; }
     }
 }

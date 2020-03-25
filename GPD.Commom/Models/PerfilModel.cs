@@ -12,5 +12,9 @@ namespace GPD.Commom.Models
 
         [StringLength(maximumLength: PerfilConsts.TamanhoColunaDescricao, ErrorMessage = "A descrição do perfil não pode conter mais que 500 caracteres.")]
         public string Descricao { get; set; }
+
+        [Required(ErrorMessage = "O código do perfil é obrigatório.")]
+        [Range(minimum: 1, maximum: uint.MaxValue, ErrorMessage = "O código do perfil é inválido.")]
+        public uint Codigo { get; set; }
     }
 }

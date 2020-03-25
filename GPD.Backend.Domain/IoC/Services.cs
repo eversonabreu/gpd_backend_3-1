@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using GPD.Backend.Domain.Services.Contracts;
+using GPD.Backend.Domain.Services.Implementations;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Linq;
 using System.Reflection;
@@ -30,6 +32,11 @@ namespace GPD.Backend.Domain.IoC
 
                 interfaces.Remove(interfaceType);
             }
+        }
+
+        public static void AddBusinessServices(this IServiceCollection services)
+        {
+            services.AddSingleton<ILoginService, LoginService>();
         }
     }
 }

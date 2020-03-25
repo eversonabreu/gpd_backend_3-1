@@ -14,6 +14,8 @@ namespace GPD.Backend.Infrastructure.Database.Mappings
             builder.Property(bld => bld.Id).IsRequired();
             builder.Property(bld => bld.Nome).HasMaxLength(PerfilConsts.TamanhoColunaNome).IsRequired();
             builder.Property(bld => bld.Descricao).HasMaxLength(PerfilConsts.TamanhoColunaDescricao).IsRequired();
+            builder.Property(bld => bld.Codigo).IsRequired();
+            builder.HasIndex(bld => bld.Codigo).HasName("UkPerfil").IsUnique();
         }
     }
 }

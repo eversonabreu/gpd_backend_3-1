@@ -80,7 +80,9 @@ namespace GPD.Backend.Api
                 swg.AddSecurityRequirement(requirement);
             });
 
+            services.AddTransient<IHttpContextAccessor, HttpContextAccessor>();
             Services.LoadRepositories(services, typeof(DatabaseContext).Assembly);
+            services.AddBusinessServices();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, DatabaseContext databaseContext)
@@ -100,7 +102,6 @@ namespace GPD.Backend.Api
             app.UseRouting();
             app.UseMiddleware(typeof(HandlingMiddleware));
             app.UseStaticFiles();
-            //app.UseAuthentication();
             app.UseMvc();
             app.UseStatusCodePages();
             app.UseSwagger();

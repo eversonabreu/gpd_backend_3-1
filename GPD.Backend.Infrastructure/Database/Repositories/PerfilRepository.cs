@@ -8,5 +8,10 @@ namespace GPD.Backend.Infrastructure.Database.Repositories
     public sealed class PerfilRepository : BaseRepository<Perfil>, IPerfilRepository
     {
         public PerfilRepository(IServiceProvider serviceProvider) : base(serviceProvider) { }
+
+        protected override void BeforeUpdate(Perfil oldValue, Perfil newValue)
+        {
+            newValue.Codigo = oldValue.Codigo;
+        }
     }
 }
