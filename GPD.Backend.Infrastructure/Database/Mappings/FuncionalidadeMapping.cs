@@ -9,7 +9,7 @@ namespace GPD.Backend.Infrastructure.Database.Mappings
     {
         public void Configure(EntityTypeBuilder<Funcionalidade> builder)
         {
-            builder.ToTable(FuncionalidadeConsts.NomeTabela);
+            builder.ToTable(nameof(Funcionalidade));
             builder.HasKey(bld => bld.Id).HasName("PkFuncionalidade");
             builder.Property(bld => bld.Id).IsRequired();
             builder.Property(bld => bld.Nome).HasMaxLength(FuncionalidadeConsts.TamanhoColunaNome).IsRequired();

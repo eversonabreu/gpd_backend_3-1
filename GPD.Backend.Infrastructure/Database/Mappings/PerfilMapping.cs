@@ -9,7 +9,7 @@ namespace GPD.Backend.Infrastructure.Database.Mappings
     {
         public void Configure(EntityTypeBuilder<Perfil> builder)
         {
-            builder.ToTable(PerfilConsts.NomeTabela);
+            builder.ToTable(nameof(Perfil));
             builder.HasKey(bld => bld.Id).HasName("PkPerfil");
             builder.Property(bld => bld.Id).IsRequired();
             builder.Property(bld => bld.Nome).HasMaxLength(PerfilConsts.TamanhoColunaNome).IsRequired();

@@ -10,6 +10,8 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Linq;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using GPD.Backend.Domain.Entities;
 
 namespace GPD.Backend.Infrastructure.Database.Repositories.Base
 {
@@ -135,32 +137,50 @@ namespace GPD.Backend.Infrastructure.Database.Repositories.Base
             return (data, count);
         }
 
-        public long Add(TEntity entity)
+        public long Add(TEntity entity, long? idUserAudit = null)
         {
             BeforeAdd(entity);
             dbSet.Add(entity);
             databaseContext.SaveChanges();
+
+            if (idUserAudit.HasValue)
+            {
+                CreateAudit(entity.Id, TipoAuditoria.Insercao, idUserAudit.Value);
+            }
+
             AfterAdd(entity);
             return entity.Id;
         }
 
-        public void Update(TEntity entity)
+        public void Update(TEntity entity, long? idUserAudit = null)
         {
             TEntity entityDb = GetById(entity.Id, false);
             BeforeUpdate(entityDb, entity);
             databaseContext.Entry(entityDb).State = EntityState.Modified;
             databaseContext.Entry(entityDb).CurrentValues.SetValues(entity);
             databaseContext.SaveChanges();
+
+            if (idUserAudit.HasValue)
+            {
+                CreateAudit(entity.Id, TipoAuditoria.Alteracao, idUserAudit.Value, entityDb);
+            }
+
             AfterUpdate(entityDb, entity);
         }
 
-        public void DeleteById(long id)
+        public void DeleteById(long id, long? idUserAudit = null)
         {
             TEntity entity = GetById(id, false);
             BeforeDelete(entity);
             databaseContext.Entry(entity).State = EntityState.Deleted;
             dbSet.Remove(entity);
             databaseContext.SaveChanges();
+
+            if (idUserAudit.HasValue)
+            {
+                CreateAudit(entity.Id, TipoAuditoria.Exclusao, idUserAudit.Value, entity);
+            }
+
             AfterDelete(entity);
         }
 
@@ -188,5 +208,79 @@ namespace GPD.Backend.Infrastructure.Database.Repositories.Base
         protected virtual void BeforeDelete(TEntity entity) { }
 
         protected virtual void AfterDelete(TEntity entity) { }
+
+        private void CreateAudit(long idRegistro, TipoAuditoria tipoAuditoria, long idUsuario, TEntity obj = null)
+        {
+            var databaseFacade = databaseContext.Database;
+            string nomeTabela = typeof(TEntity).Name;
+            string json = obj != null ? System.Text.Json.JsonSerializer.Serialize(obj) : null;
+            Task.Run(async () => await CreateAuditAsync(databaseFacade, nomeTabela, idRegistro, tipoAuditoria, idUsuario, json));
+        }
+
+        private async Task CreateAuditAsync(DatabaseFacade databaseFacade, string nomeTabela, long idRegistro, TipoAuditoria tipoAuditoria, long idUsuario, string obj)
+        {
+            switch (tipoAuditoria)
+            {
+                case TipoAuditoria.Insercao:
+                    {
+                        using var context = DatabaseContext.CreateContext(databaseFacade);
+                        context.Auditorias.Add(new Auditoria
+                        {
+                            NomeTabela = nomeTabela,
+                            IdRegistro = idRegistro,
+                            DataRegistro = DateTime.UtcNow,
+                            Tipo = TipoAuditoria.Insercao,
+                            IdUsuario = idUsuario
+                        });
+                        await context.SaveChangesAsync();
+                        break;
+                    }
+                case TipoAuditoria.Exclusao:
+                    {
+                        using var context = DatabaseContext.CreateContext(databaseFacade);
+                        context.Auditorias.Add(new Auditoria
+                        {
+                            NomeTabela = nomeTabela,
+                            IdRegistro = idRegistro,
+                            DataRegistro = DateTime.UtcNow,
+                            Tipo = TipoAuditoria.Exclusao,
+                            IdUsuario = idUsuario,
+                            Objeto = obj
+                        });
+                        await context.SaveChangesAsync();
+                        break;
+                    }
+                case TipoAuditoria.Alteracao:
+                    {
+                        const int limitAuditUpdate = 5;
+
+                        using var context = DatabaseContext.CreateContext(databaseFacade);
+
+                        var auditorias = context.Auditorias.Where(item => item.NomeTabela == nomeTabela && item.IdRegistro == idRegistro && item.Tipo == TipoAuditoria.Alteracao)?.OrderBy(subItem => subItem.DataRegistro)?.ToList();
+
+                        if (auditorias?.Count() > limitAuditUpdate)
+                        {
+                            auditorias = auditorias.Take(limitAuditUpdate).ToList();
+
+                            foreach (var aud in auditorias)
+                            {
+                                context.Auditorias.Remove(aud);
+                            }
+                        }
+
+                        context.Auditorias.Add(new Auditoria
+                        {
+                            NomeTabela = nomeTabela,
+                            IdRegistro = idRegistro,
+                            DataRegistro = DateTime.UtcNow,
+                            Tipo = TipoAuditoria.Alteracao,
+                            IdUsuario = idUsuario,
+                            Objeto = obj
+                        });
+                        await context.SaveChangesAsync();
+                        break;
+                    }
+            }
+        }
     }
 }

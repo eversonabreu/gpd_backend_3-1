@@ -9,7 +9,7 @@ namespace GPD.Backend.Infrastructure.Database.Mappings
     {
         public void Configure(EntityTypeBuilder<Estado> builder)
         {
-            builder.ToTable(EstadoConsts.NomeTabela);
+            builder.ToTable(nameof(Estado));
             builder.HasKey(bld => bld.Id).HasName("PkEstado");
             builder.Property(bld => bld.Id).IsRequired();
             builder.Property(bld => bld.CodigoUfIbge).IsRequired();

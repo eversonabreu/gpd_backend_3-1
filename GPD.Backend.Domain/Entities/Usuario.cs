@@ -20,5 +20,7 @@ namespace GPD.Backend.Domain.Entities
         public ICollection<PerfilUsuario> PerfisUsuario { get; set; }
 
         public ICollection<UsuarioFuncionalidade> UsuarioFuncionalidades { get; set; }
+
+        public ICollection<Indicador> Indicadores { get; set; }
     }
 }

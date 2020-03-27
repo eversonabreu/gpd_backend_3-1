@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using GPD.Backend.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Configuration;
@@ -74,5 +75,7 @@ namespace GPD.Backend.Infrastructure.Database
                                                             password, host, port, database, pooling, minPoolSize, maxPoolSize);
             return connectionStringDatabase;
         }
+
+        public virtual DbSet<Auditoria> Auditorias { get; set; }
     }
 }

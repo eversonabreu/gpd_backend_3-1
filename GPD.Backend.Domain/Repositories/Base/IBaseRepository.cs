@@ -15,11 +15,11 @@ namespace GPD.Backend.Domain.Repositories.Base
 
         (IEnumerable<TEntity> Data, int Count) FilterWithPagination(string expression, string sort = null, uint page = 0, uint limit = 10, bool loadDependencies = false);
 
-        long Add(TEntity entity);
+        long Add(TEntity entity, long? idUserAudit = null);
 
-        void Update(TEntity entity);
+        void Update(TEntity entity, long? idUserAudit = null);
 
-        void DeleteById(long id);
+        void DeleteById(long id, long? idUserAudit = null);
 
         void DeleteMany(IEnumerable<long> ids);
     }

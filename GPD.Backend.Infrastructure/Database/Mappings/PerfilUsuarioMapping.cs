@@ -1,5 +1,4 @@
 ﻿using GPD.Backend.Domain.Entities;
-using GPD.Commom.Consts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -9,7 +8,7 @@ namespace GPD.Backend.Infrastructure.Database.Mappings
     {
         public void Configure(EntityTypeBuilder<PerfilUsuario> builder)
         {
-            builder.ToTable(PerfilUsuarioConsts.NomeTabela);
+            builder.ToTable(nameof(PerfilUsuario));
             builder.HasKey(bld => bld.Id).HasName("PkPerfilUsuario");
             builder.Property(bld => bld.Id).IsRequired();
             builder.Property(bld => bld.IdPerfil).IsRequired();
