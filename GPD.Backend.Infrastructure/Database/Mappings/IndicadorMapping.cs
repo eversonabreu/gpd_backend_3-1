@@ -17,11 +17,12 @@ namespace GPD.Backend.Infrastructure.Database.Mappings
             builder.Property(bld => bld.Ordem);
             builder.Property(bld => bld.ValorPercentualPeso).HasColumnType("decimal(3, 2)").IsRequired();
             builder.Property(bld => bld.ValorPercentualCriterio).HasColumnType("decimal(3, 2)").IsRequired();
+            builder.Property(bld => bld.TipoCalculo).IsRequired();
             builder.Property(bld => bld.TipoRemuneracao).IsRequired();
-            builder.Property(bld => bld.TipoCardinalidade).IsRequired();
+            builder.Property(bld => bld.PossuiCardinalidade).IsRequired();
             builder.Property(bld => bld.TipoPeriodicidade).IsRequired();
-            builder.Property(bld => bld.TipoAcumuloMeta).IsRequired();
-            builder.Property(bld => bld.TipoAcumuloRealizado).IsRequired();
+            builder.Property(bld => bld.AcumulaMeta).IsRequired();
+            builder.Property(bld => bld.AcumulaRealizado).IsRequired();
             builder.Property(bld => bld.IdUnidadeMedida).IsRequired();
             builder.Property(bld => bld.Corporativo).IsRequired();
             builder.Property(bld => bld.IdUsuarioResponsavel);

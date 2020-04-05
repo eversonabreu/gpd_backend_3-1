@@ -31,7 +31,7 @@ namespace GPD.Backend.Api.Controllers.Base
             UserIdentity.VerifyPermission(UserIdentity.ActionPermission.Post, User);
             model.Validate();
             var entity = model.ToEntity<TEntity>();
-            return repository.Add(entity);
+            return repository.Add(entity, User.Id);
         }
 
         [HttpPut]
@@ -40,14 +40,14 @@ namespace GPD.Backend.Api.Controllers.Base
             UserIdentity.VerifyPermission(UserIdentity.ActionPermission.Put, User);
             model.Validate(validateId: true);
             var entity = model.ToEntity<TEntity>(model.Id!.Value);
-            repository.Update(entity);
+            repository.Update(entity, User.Id);
         }
 
         [HttpDelete]
         public virtual void Delete(long id)
         {
             UserIdentity.VerifyPermission(UserIdentity.ActionPermission.Delete, User);
-            repository.DeleteById(id);
+            repository.DeleteById(id, User.Id);
         }
 
         [Route("itens/{ids}"), HttpDelete]

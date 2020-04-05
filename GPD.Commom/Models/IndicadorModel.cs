@@ -32,21 +32,22 @@ namespace GPD.Commom.Models
         [Range(minimum: 1, maximum: 4, ErrorMessage = "O tipo de remuneração não possui um valor válido.")]
         public int TipoRemuneracao { get; set; }
 
-        [Required(ErrorMessage = "O tipo de cardinalidade é obrigatório.")]
-        [Range(minimum: 1, maximum: 3, ErrorMessage = "O tipo de cardinalidade não possui um valor válido.")]
-        public int TipoCardinalidade { get; set; }
+        [Required(ErrorMessage = "O campo 'Possui cardinalidade' é obrigatório.")]
+        public bool PossuiCardinalidade { get; set; }
+
+        [Required(ErrorMessage = "O tipo de cálculo é obrigatório.")]
+        [Range(minimum: 1, maximum: 4, ErrorMessage = "O tipo de cálculo não possui um valor válido.")]
+        public int TipoCalculo { get; set; }
 
         [Required(ErrorMessage = "O tipo de periodicidade é obrigatório.")]
         [Range(minimum: 1, maximum: 3, ErrorMessage = "O tipo de periodicidade não possui um valor válido.")]
         public int TipoPeriodicidade { get; set; }
 
-        [Required(ErrorMessage = "O tipo de acúmulo da meta é obrigatório.")]
-        [Range(minimum: 1, maximum: 3, ErrorMessage = "O tipo de acúmulo da meta não possui um valor válido.")]
-        public int TipoAcumuloMeta { get; set; }
+        [Required(ErrorMessage = "O campo 'Acumula meta' é obrigatório.")]
+        public bool AcumulaMeta { get; set; }
 
-        [Required(ErrorMessage = "O tipo de acúmulo do realizado é obrigatório.")]
-        [Range(minimum: 1, maximum: 3, ErrorMessage = "O tipo de acúmulo do realizado não possui um valor válido.")]
-        public int TipoAcumuloRealizado { get; set; }
+        [Required(ErrorMessage = "O campo 'Acumula realizado' é obrigatório.")]
+        public bool AcumulaRealizado { get; set; }
 
         [Required(ErrorMessage = "O id da unidade de medida é obrigatório.")]
         [Range(minimum: 1, maximum: long.MaxValue, ErrorMessage = "O id da unidade de medida é inválido.")]

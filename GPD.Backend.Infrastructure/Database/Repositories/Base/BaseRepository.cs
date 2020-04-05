@@ -213,11 +213,10 @@ namespace GPD.Backend.Infrastructure.Database.Repositories.Base
         {
             var databaseFacade = databaseContext.Database;
             string nomeTabela = typeof(TEntity).Name;
-            string json = obj != null ? System.Text.Json.JsonSerializer.Serialize(obj) : null;
-            Task.Run(async () => await CreateAuditAsync(databaseFacade, nomeTabela, idRegistro, tipoAuditoria, idUsuario, json));
+            Task.Run(async () => await CreateAuditAsync(databaseFacade, nomeTabela, idRegistro, tipoAuditoria, idUsuario, obj));
         }
 
-        private async Task CreateAuditAsync(DatabaseFacade databaseFacade, string nomeTabela, long idRegistro, TipoAuditoria tipoAuditoria, long idUsuario, string obj)
+        private async Task CreateAuditAsync(DatabaseFacade databaseFacade, string nomeTabela, long idRegistro, TipoAuditoria tipoAuditoria, long idUsuario, TEntity obj = null)
         {
             switch (tipoAuditoria)
             {
@@ -237,6 +236,7 @@ namespace GPD.Backend.Infrastructure.Database.Repositories.Base
                     }
                 case TipoAuditoria.Exclusao:
                     {
+                        string json = obj != null ? System.Text.Json.JsonSerializer.Serialize(obj) : null;
                         using var context = DatabaseContext.CreateContext(databaseFacade);
                         context.Auditorias.Add(new Auditoria
                         {
@@ -245,7 +245,7 @@ namespace GPD.Backend.Infrastructure.Database.Repositories.Base
                             DataRegistro = DateTime.UtcNow,
                             Tipo = TipoAuditoria.Exclusao,
                             IdUsuario = idUsuario,
-                            Objeto = obj
+                            Objeto = json
                         });
                         await context.SaveChangesAsync();
                         break;
@@ -253,19 +253,18 @@ namespace GPD.Backend.Infrastructure.Database.Repositories.Base
                 case TipoAuditoria.Alteracao:
                     {
                         const int limitAuditUpdate = 5;
-
+                        string json = obj != null ? System.Text.Json.JsonSerializer.Serialize(obj) : null;
                         using var context = DatabaseContext.CreateContext(databaseFacade);
-
                         var auditorias = context.Auditorias.Where(item => item.NomeTabela == nomeTabela && item.IdRegistro == idRegistro && item.Tipo == TipoAuditoria.Alteracao)?.OrderBy(subItem => subItem.DataRegistro)?.ToList();
+                        int count = auditorias?.Count ?? 0;
+                        int index = 0;
 
-                        if (auditorias?.Count() > limitAuditUpdate)
+                        while (count >= limitAuditUpdate)
                         {
-                            auditorias = auditorias.Take(limitAuditUpdate).ToList();
-
-                            foreach (var aud in auditorias)
-                            {
-                                context.Auditorias.Remove(aud);
-                            }
+                            var aud = auditorias[index];
+                            context.Auditorias.Remove(aud);
+                            index++;
+                            count--;
                         }
 
                         context.Auditorias.Add(new Auditoria
@@ -275,7 +274,7 @@ namespace GPD.Backend.Infrastructure.Database.Repositories.Base
                             DataRegistro = DateTime.UtcNow,
                             Tipo = TipoAuditoria.Alteracao,
                             IdUsuario = idUsuario,
-                            Objeto = obj
+                            Objeto = json
                         });
                         await context.SaveChangesAsync();
                         break;

@@ -14,8 +14,13 @@ namespace GPD.Commom.Models
         [Range(minimum: 1, maximum: long.MaxValue, ErrorMessage = "O id do indicador é inválido.")]
         public long IdIndicador { get; set; }
 
-        [Required(ErrorMessage = "Data de lançamento é obrigatório.")]
-        public DateTime DataLancamento { get; set; }
+        [Required(ErrorMessage = "O mês é obrigatório.")]
+        [Range(minimum: 1, maximum: 12, ErrorMessage = "Mês inválido.")]
+        public int Mes { get; set; }
+
+        [Required(ErrorMessage = "O ano é obrigatório.")]
+        [Range(minimum: 2015, maximum: 2050, ErrorMessage = "Ano inválido.")]
+        public int Ano { get; set; }
 
         [Required(ErrorMessage = "Valor da meta é obrigatório.")]
         public decimal ValorMeta { get; set; }

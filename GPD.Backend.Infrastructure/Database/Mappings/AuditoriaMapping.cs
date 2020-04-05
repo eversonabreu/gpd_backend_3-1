@@ -17,6 +17,7 @@ namespace GPD.Backend.Infrastructure.Database.Mappings
             builder.Property(bld => bld.Tipo).IsRequired();
             builder.Property(bld => bld.IdUsuario).IsRequired();
             builder.Property(bld => bld.Objeto).HasColumnType("text");
+            builder.HasIndex(bld => new { bld.NomeTabela, bld.IdRegistro });
         }
     }
 }

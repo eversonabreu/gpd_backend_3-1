@@ -1,7 +1,6 @@
 ﻿using GPD.Backend.Domain.Attributes;
 using GPD.Backend.Domain.Entities.Base;
 using GPD.Backend.Domain.Repositories;
-using System;
 
 namespace GPD.Backend.Domain.Entities
 {
@@ -17,7 +16,9 @@ namespace GPD.Backend.Domain.Entities
         [LoadEntity(NameForeignKey = nameof(IdIndicador), TypeRepository = typeof(IIndicadorRepository))]
         public Indicador Indicador { get; set; }
 
-        public DateTime DataLancamento { get; set; }
+        public int Mes { get; set; }
+
+        public int Ano { get; set; }
 
         public decimal ValorMeta { get; set; }
 

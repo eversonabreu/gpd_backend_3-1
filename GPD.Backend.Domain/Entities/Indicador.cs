@@ -18,26 +18,6 @@ namespace GPD.Backend.Domain.Entities
         Diario = 4
     }
 
-    public enum TipoCardinalidade
-    {
-        [Description("Exata")]
-        Exata = 1,
-        [Description("Quanto maior melhor")]
-        QuantoMaiorMelhor = 2,
-        [Description("Quanto menor melhor")]
-        QuantoMenorMelhor = 3
-    }
-
-    public enum TipoAcumulo
-    {
-        [Description("Não acumulável")]
-        NaoAcumulavel = 1,
-        [Description("Acumulável")]
-        Acumulavel = 2,
-        [Description("Média")]
-        Media = 3
-    }
-
     public enum TipoPeriodicidade
     {
         [Description("Diário")]
@@ -74,15 +54,17 @@ namespace GPD.Backend.Domain.Entities
 
         public decimal ValorPercentualCriterio { get; set; }
 
+        public TipoCalculo TipoCalculo { get; set; }
+
         public TipoRemuneracao TipoRemuneracao { get; set; }
 
-        public TipoCardinalidade TipoCardinalidade { get; set; }
+        public bool PossuiCardinalidade { get; set; }
 
         public TipoPeriodicidade TipoPeriodicidade { get; set; }
 
-        public TipoAcumulo TipoAcumuloMeta { get; set; }
+        public bool AcumulaMeta { get; set; }
 
-        public TipoAcumulo TipoAcumuloRealizado { get; set; }
+        public bool AcumulaRealizado { get; set; }
 
         public long IdUnidadeMedida { get; set; }
 

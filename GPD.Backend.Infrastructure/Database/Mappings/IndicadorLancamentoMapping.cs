@@ -13,7 +13,8 @@ namespace GPD.Backend.Infrastructure.Database.Mappings
             builder.Property(bld => bld.Id).IsRequired();
             builder.Property(bld => bld.IdProjeto).IsRequired();
             builder.Property(bld => bld.IdIndicador).IsRequired();
-            builder.Property(bld => bld.DataLancamento).HasColumnType("date").IsRequired();
+            builder.Property(bld => bld.Mes).IsRequired();
+            builder.Property(bld => bld.Ano).IsRequired();
             builder.Property(bld => bld.ValorMeta).HasColumnType("decimal(20, 2)").IsRequired();
             builder.Property(bld => bld.ValorRealizado).HasColumnType("decimal(20, 2)").IsRequired();
 
@@ -31,7 +32,9 @@ namespace GPD.Backend.Infrastructure.Database.Mappings
                  .HasConstraintName("FKIndicadorLancamentoIndicador")
                  .OnDelete(DeleteBehavior.Restrict);
 
-            builder.HasIndex(bld => new { bld.IdProjeto, bld.IdIndicador, bld.DataLancamento}).HasName("UkIndicadorLancamento").IsUnique();
+            builder.HasIndex(bld => new { bld.IdProjeto }).HasName("UkIndicadorLancamentoPro");
+            builder.HasIndex(bld => new { bld.IdProjeto, bld.IdIndicador}).HasName("UkIndicadorLancamentoProIn");
+            builder.HasIndex(bld => new { bld.IdProjeto, bld.IdIndicador, bld.Mes, bld.Ano}).HasName("UkIndicadorLancamento").IsUnique();
         }
     }
 }
