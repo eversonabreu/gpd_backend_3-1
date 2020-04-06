@@ -3,15 +3,17 @@ using System;
 using GPD.Backend.Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace GPD.Backend.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    partial class DatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20200406130035_ArvoreIndicadores")]
+    partial class ArvoreIndicadores
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -172,6 +174,18 @@ namespace GPD.Backend.Infrastructure.Database.Migrations
 
                     b.Property<int>("TipoRemuneracao")
                         .HasColumnType("integer");
+
+                    b.Property<decimal?>("ValorMaximoAtingimento")
+                        .HasColumnType("decimal(20, 2)");
+
+                    b.Property<decimal?>("ValorMaximoPonderado")
+                        .HasColumnType("decimal(20, 2)");
+
+                    b.Property<decimal?>("ValorMinimoAtingimento")
+                        .HasColumnType("decimal(20, 2)");
+
+                    b.Property<decimal?>("ValorMinimoPonderado")
+                        .HasColumnType("decimal(20, 2)");
 
                     b.Property<decimal>("ValorPercentualCriterio")
                         .HasColumnType("decimal(3, 2)");
@@ -397,9 +411,6 @@ namespace GPD.Backend.Infrastructure.Database.Migrations
                     b.Property<long>("IdProjeto")
                         .HasColumnType("bigint");
 
-                    b.Property<long?>("IdSuperior")
-                        .HasColumnType("bigint");
-
                     b.Property<long?>("IdUsuario")
                         .HasColumnType("bigint");
 
@@ -417,8 +428,6 @@ namespace GPD.Backend.Infrastructure.Database.Migrations
                     b.HasIndex("IdNivelOrganizacional");
 
                     b.HasIndex("IdProjeto");
-
-                    b.HasIndex("IdSuperior");
 
                     b.HasIndex("IdUsuario");
 
@@ -479,12 +488,6 @@ namespace GPD.Backend.Infrastructure.Database.Migrations
                     b.Property<string>("Senha")
                         .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<decimal>("ValorPesoCorporativo")
-                        .HasColumnType("decimal(20,2)");
-
-                    b.Property<decimal>("ValorPesoIndividual")
-                        .HasColumnType("decimal(20,2)");
 
                     b.HasKey("Id")
                         .HasName("PkUsuario");
@@ -610,12 +613,6 @@ namespace GPD.Backend.Infrastructure.Database.Migrations
                         .HasConstraintName("FKProjetoEstruturaOrganizacionalProjeto")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.HasOne("GPD.Backend.Domain.Entities.ProjetoEstruturaOrganizacional", "Superior")
-                        .WithMany("ProjetoEstruturasOrganizacionais")
-                        .HasForeignKey("IdSuperior")
-                        .HasConstraintName("FKProjetoEstruturaOrganizacionalSuperior")
-                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("GPD.Backend.Domain.Entities.Usuario", "Usuario")
                         .WithMany("ProjetoEstruturasOrganizacionais")

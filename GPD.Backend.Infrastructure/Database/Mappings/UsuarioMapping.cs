@@ -18,6 +18,8 @@ namespace GPD.Backend.Infrastructure.Database.Mappings
             builder.Property(bld => bld.Email).HasMaxLength(UsuarioConsts.TamanhoColunaEmail).IsRequired();
             builder.Property(bld => bld.Administrador).IsRequired();
             builder.Property(bld => bld.Ativo).IsRequired();
+            builder.Property(bld => bld.ValorPesoIndividual).HasColumnType("decimal(20,2)").IsRequired();
+            builder.Property(bld => bld.ValorPesoCorporativo).HasColumnType("decimal(20,2)").IsRequired();
             builder.HasIndex(bld => bld.Login).HasName("UkUsuario").IsUnique();
         }
     }

@@ -27,6 +27,12 @@ namespace GPD.Commom.Models
         [Required(ErrorMessage = "O campo ativo é obrigatório.")]
         public bool Ativo { get; set; }
 
+        [Required(ErrorMessage = "O campo 'Valor peso individual' é obrigatório.")]
+        public decimal ValorPesoIndividual { get; set; }
+
+        [Required(ErrorMessage = "O campo 'Valor peso corporativo' é obrigatório.")]
+        public decimal ValorPesoCorporativo { get; set; }
+
         public override void AdditionalValidations()
         {
             Login = Login?.Trim().ToUpper();

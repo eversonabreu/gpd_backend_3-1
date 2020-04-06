@@ -63,14 +63,6 @@ namespace GPD.Commom.Models
 
         public string Observacao { get; set; }
 
-        public decimal? ValorMinimoAtingimento { get; set; }
-
-        public decimal? ValorMaximoAtingimento { get; set; }
-
-        public decimal? ValorMinimoPonderado { get; set; }
-
-        public decimal? ValorMaximoPonderado { get; set; }
-
         public override void AdditionalValidations()
         {
             Identificador = Identificador.Trim().ToUpper();

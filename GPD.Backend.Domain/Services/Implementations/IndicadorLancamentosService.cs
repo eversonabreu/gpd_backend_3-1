@@ -7,6 +7,7 @@ using System.Data;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace GPD.Backend.Domain.Services.Implementations
 {
@@ -14,12 +15,18 @@ namespace GPD.Backend.Domain.Services.Implementations
     {
         private readonly IIndicadorLancamentoRepository indicadorLancamentoRepository;
         private readonly IIndicadorRepository indicadorRepository;
+        private readonly IProjetoEstruturaOrganizacionalRepository projetoEstruturaOrganizacionalRepository;
+        private readonly IUsuarioRepository usuarioRepository;
 
         public IndicadorLancamentosService(IIndicadorLancamentoRepository indicadorLancamentoRepository,
-            IIndicadorRepository indicadorRepository)
+            IIndicadorRepository indicadorRepository,
+            IProjetoEstruturaOrganizacionalRepository projetoEstruturaOrganizacionalRepository,
+            IUsuarioRepository usuarioRepository)
         {
             this.indicadorLancamentoRepository = indicadorLancamentoRepository;
             this.indicadorRepository = indicadorRepository;
+            this.projetoEstruturaOrganizacionalRepository = projetoEstruturaOrganizacionalRepository;
+            this.usuarioRepository = usuarioRepository;
         }
 
         private IEnumerable<Lancamentos> ObterLancamentos(long idProjeto, long idIndicador, DateTime dataInicial, DateTime dataFinal)
@@ -128,10 +135,16 @@ namespace GPD.Backend.Domain.Services.Implementations
             }
         }
 
-        public IndicadorLancamentosResultado ObterResultadoPorIndicador(long idProjeto, long idIndicador, int mesInicial, int anoInicial, int mesFinal, int anoFinal)
+        public IndicadorLancamentosResultado ObterResultadosPorIndicador(long idProjeto, long idIndicador, int mesInicial, int anoInicial, int mesFinal, int anoFinal)
         {
             var dataInicial = new DateTime(anoInicial, mesInicial, 1);
             var dataFinal = Utils.ObterDataNoUltimoDiaDoMes(mesFinal, anoFinal);
+
+            if (dataInicial > dataFinal)
+            {
+                throw new Exception($"Ano e mês de início superam o ano e mês final.");
+            }
+
             var indicador = indicadorRepository.GetById(idIndicador);
             decimal valorMeta = 0m;
             decimal valorRealizado = 0m;
@@ -192,7 +205,6 @@ namespace GPD.Backend.Domain.Services.Implementations
                     valor3 = (1m - valor3) * 100m;
                 }
 
-                //falta colocar as travas inferiores e superiores
                 valorAtingimento = decimal.Round(valor3, 2);
             }
 
@@ -202,8 +214,154 @@ namespace GPD.Backend.Domain.Services.Implementations
                 UnidadeMedida = indicador.UnidadeMedida.Sigla,
                 ValorAtingimento = valorAtingimento,
                 ValorMeta = valorMeta,
-                ValorRealizado = valorRealizado
+                ValorRealizado = valorRealizado,
+                Peso = indicador.ValorPercentualPeso
             };
+        }
+
+        private decimal ObterValorPonderadoCorporativo(long idProjeto, int mesInicial, int anoInicial, int mesFinal, int anoFinal)
+        {
+            var indicadoresCorporativos = projetoEstruturaOrganizacionalRepository.Filter(item => item.IdProjeto == idProjeto && item.Tipo == TipoProjetoEstruturaOrganizacional.Corporativo);
+            if (indicadoresCorporativos?.Any() ?? false)
+            {
+                var pesosAtingimentos = new List<decimal>();
+                decimal pesos = 0m;
+                var listaIndicadoresCorporativos = new List<Task>();
+                foreach (var ind in indicadoresCorporativos)
+                {
+                    long idIndicador = ind.IdIndicador.Value;
+                    listaIndicadoresCorporativos.Add(Task.Run(async () =>
+                    {
+                        if (indicadorRepository.GetById(idIndicador, false).Corporativo)
+                        {
+                            var resultado = ObterResultadosPorIndicador(idProjeto, idIndicador, mesInicial, anoInicial, mesFinal, anoFinal);
+                            pesosAtingimentos.Add(resultado.ValorAtingimento * resultado.Peso);
+                            pesos += resultado.Peso;
+                        }
+                        await Task.CompletedTask;
+                    }));
+                }
+
+                Task.WaitAll(listaIndicadoresCorporativos.ToArray());
+
+                if (pesosAtingimentos.Any() && pesos != 0m)
+                {
+                    decimal pesosAtingimentosTotal = pesosAtingimentos.Sum();
+                    decimal resultadoFinal = decimal.Round(pesosAtingimentosTotal / pesos, 2);
+                    return resultadoFinal;
+                }
+            }
+
+            return 0m;
+        }
+
+
+        public UsuarioIndicadorLancamentosResultado ObterResultadosParaUsuario(long idProjetoEstruturaOrganizacional, long idUsuario, int mesInicial, int anoInicial, int mesFinal, int anoFinal)
+        {
+            var retorno = new UsuarioIndicadorLancamentosResultado { Indicadores = new List<IndicadorLancamentosResultado>() };
+            var indicadores = projetoEstruturaOrganizacionalRepository.Filter(item => item.IdSuperior == idProjetoEstruturaOrganizacional && item.Tipo == TipoProjetoEstruturaOrganizacional.Indicador);
+            if (indicadores?.Any() ?? false)
+            {
+                long idProjetoCorporativo = indicadores.First().IdProjeto;
+                var listaIndicadores = new List<Task>();
+
+                decimal valorPonderadoCorporativo = 0m;
+
+                listaIndicadores.Add(Task.Run(async () =>
+                {
+                    valorPonderadoCorporativo = ObterValorPonderadoCorporativo(idProjetoCorporativo, mesInicial, anoInicial, mesFinal, anoFinal);
+                    await Task.CompletedTask;
+                }));
+
+                foreach (var ind in indicadores)
+                {
+                    long idProjeto = ind.IdProjeto;
+                    long idIndicador = ind.IdIndicador.Value;
+                    listaIndicadores.Add(Task.Run(async () =>
+                    {
+                        var resultado = ObterResultadosPorIndicador(idProjeto, idIndicador, mesInicial, anoInicial, mesFinal, anoFinal);
+
+                        //verificar travas para o atingimento...
+                        retorno.Indicadores.Add(resultado);
+                        await Task.CompletedTask;
+                    }));
+                }
+
+                Task.WaitAll(listaIndicadores.ToArray());
+
+                decimal somaPesos = 0m;
+                decimal valorPonderadoIndividual = 0m;
+                foreach (var indResultado in retorno.Indicadores)
+                {
+                    var pesoAtingimento = indResultado.Peso * indResultado.ValorAtingimento;
+                    valorPonderadoIndividual += pesoAtingimento;
+                    somaPesos += indResultado.Peso;
+                }
+
+                if (somaPesos != 0m)
+                {
+                    //verificar travas...
+                    valorPonderadoIndividual = decimal.Round(valorPonderadoIndividual / somaPesos, 2);
+                }
+
+                retorno.ValorPonderadoIndividual = valorPonderadoIndividual;
+                retorno.ValorPonderadoCorporativo = valorPonderadoCorporativo;
+
+                var usuario = usuarioRepository.GetById(idUsuario, false);
+                decimal percentualPesoIndividual = usuario.ValorPesoIndividual / 100m;
+                decimal percentualPesoCorporativo = usuario.ValorPesoCorporativo / 100m;
+                decimal valorPonderadoFinal = decimal.Round((percentualPesoIndividual * valorPonderadoIndividual) + (percentualPesoCorporativo * valorPonderadoCorporativo), 2);
+                retorno.ValorPonderadoFinal = valorPonderadoFinal;
+            }
+
+            return retorno;
+        }
+
+        public IndicadorLancamentosEvolucaoMensal ObterResultadosPorIndicadorEvolucaoMensalSimples(long idProjeto, long idIndicador, int mesInicial, int anoInicial, int mesFinal, int anoFinal)
+        {
+            var retorno = new IndicadorLancamentosEvolucaoMensal { IndicadorEvolucaoMensalSimples = new List<IndicadorLancamentosEvolucaoMensalSimples>() };
+            var dataInicial = new DateTime(anoInicial, mesInicial, 1);
+            var dataFinal = Utils.ObterDataNoUltimoDiaDoMes(mesFinal, anoFinal);
+            var listaResultados = new List<Tuple<string, IndicadorLancamentosResultado>>();
+            var resultados = new List<Task>();
+
+            while (dataInicial <= dataFinal)
+            {
+                int mesReferencia = dataInicial.Month;
+                int anoReferencia = dataInicial.Year;
+                resultados.Add(Task.Run(async () =>
+                {
+                    var valores = ObterResultadosPorIndicador(idProjeto, idIndicador, mesReferencia, anoReferencia, mesReferencia, anoReferencia);
+                    string descricaoMesAbreviada = Utils.ObterAbreviacaoMes(mesReferencia);
+                    var tupla = new Tuple<string, IndicadorLancamentosResultado>($"{descricaoMesAbreviada}/{anoReferencia}", valores);
+                    listaResultados.Add(tupla);
+                    await Task.CompletedTask;
+                }));
+
+                dataInicial = dataInicial.AddMonths(1);
+            }
+
+            Task.WaitAll(resultados.ToArray());
+
+            if (listaResultados.Any())
+            {
+                foreach (var ret in listaResultados)
+                {
+                    retorno.IndicadorEvolucaoMensalSimples.Add(new IndicadorLancamentosEvolucaoMensalSimples
+                    {
+                        Ocorrencia = ret.Item1,
+                        ValorAtingimento = ret.Item2.ValorAtingimento,
+                        ValorMeta = ret.Item2.ValorMeta,
+                        ValorRealizado = ret.Item2.ValorRealizado
+                    });
+                }
+
+                var primeiroRetorno = listaResultados.First();
+                retorno.NomeIndicador = primeiroRetorno.Item2.NomeIndicador;
+                retorno.UnidadeMedida = primeiroRetorno.Item2.UnidadeMedida;
+            }
+
+            return retorno;
         }
     }
 

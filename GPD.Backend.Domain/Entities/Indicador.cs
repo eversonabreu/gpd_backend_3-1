@@ -82,14 +82,8 @@ namespace GPD.Backend.Domain.Entities
 
         public string Observacao { get; set; }
 
-        public decimal? ValorMinimoAtingimento { get; set; }
-
-        public decimal? ValorMaximoAtingimento { get; set; }
-
-        public decimal? ValorMinimoPonderado { get; set; }
-
-        public decimal? ValorMaximoPonderado { get; set; }
-
         public ICollection<IndicadorLancamento> IndicadorLancamentos { get; set; }
+
+        public ICollection<ProjetoEstruturaOrganizacional> ProjetoEstruturasOrganizacionais { get; set; }
     }
 }

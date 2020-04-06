@@ -17,5 +17,7 @@ namespace GPD.Backend.Domain.Entities
         public DateTime DataTermino { get; set; }
 
         public ICollection<IndicadorLancamento> IndicadorLancamentos { get; set; }
+
+        public ICollection<ProjetoEstruturaOrganizacional> ProjetoEstruturasOrganizacionais { get; set; }
     }
 }

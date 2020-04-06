@@ -1,4 +1,5 @@
 ﻿using GPD.Backend.Domain.Entities.Base;
+using System.Collections.Generic;
 
 namespace GPD.Backend.Domain.Entities
 {
@@ -16,5 +17,7 @@ namespace GPD.Backend.Domain.Entities
         public TipoNivelOrganizacional Tipo { get; set; }
 
         public string Descricao { get; set; }
+
+        public ICollection<ProjetoEstruturaOrganizacional> ProjetoEstruturasOrganizacionais { get; set; }
     }
 }

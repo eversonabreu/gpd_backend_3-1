@@ -28,10 +28,6 @@ namespace GPD.Backend.Infrastructure.Database.Mappings
             builder.Property(bld => bld.IdUsuarioResponsavel);
             builder.Property(bld => bld.Formula);
             builder.Property(bld => bld.Observacao);
-            builder.Property(bld => bld.ValorMinimoAtingimento).HasColumnType("decimal(20, 2)");
-            builder.Property(bld => bld.ValorMaximoAtingimento).HasColumnType("decimal(20, 2)");
-            builder.Property(bld => bld.ValorMinimoPonderado).HasColumnType("decimal(20, 2)");
-            builder.Property(bld => bld.ValorMaximoPonderado).HasColumnType("decimal(20, 2)");
 
             builder.HasOne(bld => bld.UsuarioResponsavel)
                  .WithMany(bld => bld.Indicadores)

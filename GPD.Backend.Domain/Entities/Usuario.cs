@@ -17,10 +17,16 @@ namespace GPD.Backend.Domain.Entities
 
         public bool Ativo { get; set; }
 
+        public decimal ValorPesoIndividual { get; set; }
+
+        public decimal ValorPesoCorporativo { get; set; }
+
         public ICollection<PerfilUsuario> PerfisUsuario { get; set; }
 
         public ICollection<UsuarioFuncionalidade> UsuarioFuncionalidades { get; set; }
 
         public ICollection<Indicador> Indicadores { get; set; }
+
+        public ICollection<ProjetoEstruturaOrganizacional> ProjetoEstruturasOrganizacionais { get; set; }
     }
 }
