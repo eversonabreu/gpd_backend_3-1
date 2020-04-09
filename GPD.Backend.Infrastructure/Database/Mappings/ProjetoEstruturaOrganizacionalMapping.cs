@@ -12,9 +12,7 @@ namespace GPD.Backend.Infrastructure.Database.Mappings
             builder.HasKey(bld => bld.Id).HasName("PkProjetoEstruturaOrganizacional");
             builder.Property(bld => bld.Id).IsRequired();
             builder.Property(bld => bld.IdProjeto).IsRequired();
-            builder.Property(bld => bld.Descricao).IsRequired();
             builder.Property(bld => bld.Tipo).IsRequired();
-            builder.Property(bld => bld.PosicaoEstrutura).IsRequired();
             builder.Property(bld => bld.IdNivelOrganizacional);
             builder.Property(bld => bld.IdUsuario);
             builder.Property(bld => bld.IdIndicador);

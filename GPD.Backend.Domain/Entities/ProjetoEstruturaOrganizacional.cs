@@ -28,11 +28,7 @@ namespace GPD.Backend.Domain.Entities
         [LoadEntity(NameForeignKey = nameof(IdProjeto), TypeRepository = typeof(IProjetoRepository))]
         public Projeto Projeto { get; set; }
 
-        public string Descricao { get; set; }
-
         public TipoProjetoEstruturaOrganizacional Tipo { get; set; }
-
-        public int PosicaoEstrutura { get; set; }
 
         public long? IdNivelOrganizacional { get; set; }
 

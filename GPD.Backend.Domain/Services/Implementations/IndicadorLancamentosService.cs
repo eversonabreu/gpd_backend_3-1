@@ -1,10 +1,12 @@
 ﻿using GPD.Backend.Domain.Entities;
+using GPD.Backend.Domain.Exceptions;
 using GPD.Backend.Domain.Repositories;
 using GPD.Backend.Domain.Services.Contracts;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,16 +19,22 @@ namespace GPD.Backend.Domain.Services.Implementations
         private readonly IIndicadorRepository indicadorRepository;
         private readonly IProjetoEstruturaOrganizacionalRepository projetoEstruturaOrganizacionalRepository;
         private readonly IUsuarioRepository usuarioRepository;
+        private readonly EnvironmentService environmentService;
+        private readonly IProjetoRepository projetoRepository;
 
         public IndicadorLancamentosService(IIndicadorLancamentoRepository indicadorLancamentoRepository,
             IIndicadorRepository indicadorRepository,
             IProjetoEstruturaOrganizacionalRepository projetoEstruturaOrganizacionalRepository,
-            IUsuarioRepository usuarioRepository)
+            IUsuarioRepository usuarioRepository,
+            EnvironmentService environmentService,
+            IProjetoRepository projetoRepository)
         {
             this.indicadorLancamentoRepository = indicadorLancamentoRepository;
             this.indicadorRepository = indicadorRepository;
             this.projetoEstruturaOrganizacionalRepository = projetoEstruturaOrganizacionalRepository;
             this.usuarioRepository = usuarioRepository;
+            this.environmentService = environmentService;
+            this.projetoRepository = projetoRepository;
         }
 
         private IEnumerable<Lancamentos> ObterLancamentos(long idProjeto, long idIndicador, DateTime dataInicial, DateTime dataFinal)
@@ -255,7 +263,6 @@ namespace GPD.Backend.Domain.Services.Implementations
             return 0m;
         }
 
-
         public UsuarioIndicadorLancamentosResultado ObterResultadosParaUsuario(long idProjetoEstruturaOrganizacional, long idUsuario, int mesInicial, int anoInicial, int mesFinal, int anoFinal)
         {
             var retorno = new UsuarioIndicadorLancamentosResultado { Indicadores = new List<IndicadorLancamentosResultado>() };
@@ -281,7 +288,15 @@ namespace GPD.Backend.Domain.Services.Implementations
                     {
                         var resultado = ObterResultadosPorIndicador(idProjeto, idIndicador, mesInicial, anoInicial, mesFinal, anoFinal);
 
-                        //verificar travas para o atingimento...
+                        if (environmentService.PossuiLimiteSuperiorAtingimento && resultado.ValorAtingimento > environmentService.ValorLimiteSuperiorAtingimento)
+                        {
+                            resultado.ValorAtingimento = environmentService.ValorLimiteSuperiorAtingimento;
+                        }
+                        else if (environmentService.PossuiLimiteInferiorAtingimento && resultado.ValorAtingimento < environmentService.ValorLimiteInferiorAtingimento)
+                        {
+                            resultado.ValorAtingimento = environmentService.ValorLimiteInferiorAtingimento;
+                        }
+
                         retorno.Indicadores.Add(resultado);
                         await Task.CompletedTask;
                     }));
@@ -300,7 +315,15 @@ namespace GPD.Backend.Domain.Services.Implementations
 
                 if (somaPesos != 0m)
                 {
-                    //verificar travas...
+                    if (environmentService.PossuiLimiteSuperiorPonderadoIndividual && valorPonderadoIndividual > environmentService.ValorLimiteSuperiorPonderadoIndividual)
+                    {
+                        valorPonderadoIndividual = environmentService.ValorLimiteSuperiorPonderadoIndividual;
+                    }
+                    else if (environmentService.PossuiLimiteInferiorPonderadoIndividual && valorPonderadoIndividual < environmentService.ValorLimiteInferiorPonderadoIndividual)
+                    {
+                        valorPonderadoIndividual = environmentService.ValorLimiteInferiorPonderadoIndividual;
+                    }
+
                     valorPonderadoIndividual = decimal.Round(valorPonderadoIndividual / somaPesos, 2);
                 }
 
@@ -363,10 +386,109 @@ namespace GPD.Backend.Domain.Services.Implementations
 
             return retorno;
         }
+
+        public (bool Exito, string Erros) GerarLancamentos(long idProjeto, byte[] dados)
+        {
+            if (dados is null)
+            {
+                throw new ArgumentNullException(nameof(dados));
+            }
+
+            var projeto = projetoRepository.GetById(idProjeto, false);
+            var dataAtual = DateTime.UtcNow.Date;
+            if (!projeto.Ativo || projeto.DataInicio.Date > dataAtual || projeto.DataTermino < dataAtual)
+            {
+                return (false, "O projeto selecionado deve estar ativo e dentro da vigência atual.");
+            }
+
+            var listaLancamentos = new List<ImportacaoLancamentos>();
+            using var memoryStream = new MemoryStream(dados);
+            using var streamReader = new StreamReader(memoryStream, encoding: Encoding.UTF8);
+            int numeroLinha = 0;
+            var builder = new StringBuilder();
+            string linha = string.Empty;
+            while ((linha = streamReader.ReadLine()) != null)
+            {
+                numeroLinha++;
+                try
+                {
+                    string[] colunas = linha.Split(';');
+                    var importacao = new ImportacaoLancamentos
+                    {
+                        Identificador = colunas[0],
+                        Ano = int.Parse(colunas[1]),
+                        Mes = int.Parse(colunas[2]),
+                        ValorMeta = decimal.Parse(colunas[3]),
+                        ValorRealizado = decimal.Parse(colunas[4])
+                    };
+
+                    if (importacao.Ano > 2050 || importacao.Ano < 2015)
+                    {
+                        builder.AppendLine($"Ano inválido! Número da linha: {numeroLinha}. Erro: 'Ano deve estar entre 2015 e 2050'.");
+                        continue;
+                    }
+
+                    if (importacao.Mes > 12 || importacao.Mes < 1)
+                    {
+                        builder.AppendLine($"Mês inválido! Número da linha: {numeroLinha}. Erro: 'Mês deve estar entre 1 e 12'.");
+                        continue;
+                    }
+
+                    var indicador = indicadorRepository.FirstOrDefault(item => item.Identificador == importacao.Identificador, loadDependencies: false);
+                    if (indicador is null)
+                    {
+                        builder.AppendLine($"Identificador de indicador inválido! Número da linha: {numeroLinha}.");
+                        continue;
+                    }
+
+                    importacao.IdIndicador = indicador.Id;
+                    listaLancamentos.Add(importacao);
+                }
+                catch (Exception exc)
+                {
+                    builder.AppendLine($"Linha inválida! Número da linha: {numeroLinha}. Erro: '{exc.Message}'.");
+                    continue;
+                }
+            }
+
+            if (builder.Length > 0)
+            {
+                return (false, builder.ToString());
+            }
+
+
+            var listaLancamentosFinal = new List<Tuple<long, long, int, int, decimal, decimal>>();
+            listaLancamentos.ForEach(item => listaLancamentosFinal.Add(new Tuple<long, long, int, int, decimal, decimal>(idProjeto, item.IdIndicador, item.Ano, item.Mes, item.ValorMeta, item.ValorRealizado)));
+
+            try
+            {
+                indicadorLancamentoRepository.GerarLancamentos(listaLancamentosFinal);
+                return (true, null);
+            }
+            catch (Exception exc)
+            {
+                return (false, $"Erro ao importar os lançamentos. '{exc.Message}'.");
+            }
+        }
     }
 
     internal class Lancamentos
     {
+        public decimal ValorMeta { get; set; }
+
+        public decimal ValorRealizado { get; set; }
+    }
+
+    internal struct ImportacaoLancamentos
+    {
+        public long IdIndicador { get; set; }
+
+        public string Identificador { get; set; }
+
+        public int Ano { get; set; }
+
+        public int Mes { get; set; }
+
         public decimal ValorMeta { get; set; }
 
         public decimal ValorRealizado { get; set; }

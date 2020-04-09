@@ -14,7 +14,6 @@ namespace GPD.Commom.Models
         [StringLength(maximumLength: UsuarioConsts.TamanhoColunaLogin, ErrorMessage = "O login do usuário não pode conter mais que 150 caracteres.")]
         public string Login { get; set; }
 
-        [Required(AllowEmptyStrings = false, ErrorMessage = "A senha do usuário é obrigatório.")]
         public string Senha { get; set; }
 
         [Required(AllowEmptyStrings = false, ErrorMessage = "O e-mail do usuário é obrigatório.")]

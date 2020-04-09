@@ -13,16 +13,9 @@ namespace GPD.Commom.Models
         [Range(minimum: 1, maximum: long.MaxValue, ErrorMessage = "O id do projeto é inválido.")]
         public long IdProjeto { get; set; }
 
-        [Required(AllowEmptyStrings = false, ErrorMessage = "A descrição é obrigatória.")]
-        public string Descricao { get; set; }
-
         [Required(ErrorMessage = "É obrigatório informar o tipo.")]
         [Range(minimum: 1, 7, ErrorMessage = "O tipo é inválido.")]
         public int Tipo { get; set; }
-
-        [Required(ErrorMessage = "É obrigatório informar a posição da estrutura.")]
-        [Range(minimum: 1, int.MaxValue, ErrorMessage = "A posição da estrutura é inválido.")]
-        public int PosicaoEstrutura { get; set; }
 
         [Range(minimum: 1, maximum: long.MaxValue, ErrorMessage = "O id da nível organizacional é inválido.")]
         public long? IdNivelOrganizacional { get; set; }

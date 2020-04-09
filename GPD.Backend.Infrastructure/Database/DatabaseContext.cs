@@ -77,5 +77,7 @@ namespace GPD.Backend.Infrastructure.Database
         }
 
         public virtual DbSet<Auditoria> Auditorias { get; set; }
+
+        public virtual DbSet<IndicadorLancamento> IndicadorLancamentos { get; set; }
     }
 }

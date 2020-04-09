@@ -10,5 +10,9 @@ namespace GPD.Backend.Domain.Services.Contracts
         IEnumerable<PerfilUsuario> ObterPerfis(long idUsuario);
 
         Usuario ObterUsuario(string login);
+
+        string GerarSenhaTemporaria();
+
+        void EnviarEmailSenha(string remetente, string destinatario, string nome, string senha);
     }
 }

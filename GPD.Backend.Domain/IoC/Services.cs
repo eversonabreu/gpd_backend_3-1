@@ -38,6 +38,7 @@ namespace GPD.Backend.Domain.IoC
         {
             services.AddSingleton<ILoginService, LoginService>();
             services.AddSingleton<IIndicadorLancamentosService, IndicadorLancamentosService>();
+            services.AddSingleton<IEmailService, EmailService>();
         }
     }
 }

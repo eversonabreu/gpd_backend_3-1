@@ -9,6 +9,8 @@ namespace GPD.Backend.Domain.Services.Contracts
         UsuarioIndicadorLancamentosResultado ObterResultadosParaUsuario(long idProjetoEstruturaOrganizacional, long idUsuario, int mesInicial, int anoInicial, int mesFinal, int anoFinal);
 
         IndicadorLancamentosEvolucaoMensal ObterResultadosPorIndicadorEvolucaoMensalSimples(long idProjeto, long idIndicador, int mesInicial, int anoInicial, int mesFinal, int anoFinal);
+
+        (bool Exito, string Erros) GerarLancamentos(long idProjeto, byte[] dados);
     }
 
     public struct IndicadorLancamentosResultado

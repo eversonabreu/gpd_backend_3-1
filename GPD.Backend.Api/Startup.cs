@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Reflection;
 using System.Collections.Generic;
 using GPD.Backend.Domain.IoC;
+using GPD.Backend.Domain.Services.Implementations;
 
 namespace GPD.Backend.Api
 {
@@ -82,6 +83,7 @@ namespace GPD.Backend.Api
 
             services.AddTransient<IHttpContextAccessor, HttpContextAccessor>();
             Services.LoadRepositories(services, typeof(DatabaseContext).Assembly);
+            services.AddSingleton(new EnvironmentService(configuration));
             services.AddBusinessServices();
         }
 
