@@ -22,6 +22,8 @@ namespace GPD.Backend.Infrastructure.Database.Mappings
                  .HasPrincipalKey(bld => bld.Id)
                  .HasConstraintName("FKMunicipioEstado")
                  .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasIndex(bld => bld.CodigoMunicipioIbge).IsUnique().HasName("UkMunicipio");
         }
     }
 }

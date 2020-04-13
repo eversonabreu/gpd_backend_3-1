@@ -9,7 +9,7 @@ namespace GPD.Backend.Domain.Services.Contracts
 
         IEnumerable<PerfilUsuario> ObterPerfis(long idUsuario);
 
-        Usuario ObterUsuario(string login);
+        Usuario ObterUsuario(string cpf);
 
         string GerarSenhaTemporaria();
 

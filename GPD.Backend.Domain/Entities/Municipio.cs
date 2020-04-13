@@ -1,6 +1,7 @@
 ﻿using GPD.Backend.Domain.Attributes;
 using GPD.Backend.Domain.Entities.Base;
 using GPD.Backend.Domain.Repositories;
+using System.Collections.Generic;
 
 namespace GPD.Backend.Domain.Entities
 {
@@ -14,5 +15,7 @@ namespace GPD.Backend.Domain.Entities
 
         [LoadEntity(NameForeignKey = nameof(IdEstado), TypeRepository = typeof(IEstadoRepository))]
         public Estado Estado { get; set; }
+
+        public ICollection<Usuario> Usuarios { get; set; }
     }
 }

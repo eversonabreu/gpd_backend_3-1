@@ -7,6 +7,21 @@ namespace GPD.Backend.Infrastructure.Database.Repositories
 {
     public sealed class ProjetoRepository : BaseRepository<Projeto>, IProjetoRepository
     {
-        public ProjetoRepository(IServiceProvider serviceProvider) : base(serviceProvider) { }
+        private readonly IProjetoEstruturaOrganizacionalRepository projetoEstruturaOrganizacionalRepository;
+
+        public ProjetoRepository(IServiceProvider serviceProvider,
+            IProjetoEstruturaOrganizacionalRepository projetoEstruturaOrganizacionalRepository) : base(serviceProvider) 
+        {
+            this.projetoEstruturaOrganizacionalRepository = projetoEstruturaOrganizacionalRepository;
+        }
+
+        protected override void AfterAdd(Projeto entity)
+        {
+            projetoEstruturaOrganizacionalRepository.Add(new ProjetoEstruturaOrganizacional
+            {
+                IdProjeto = entity.Id,
+                Tipo = TipoProjetoEstruturaOrganizacional.Projeto
+            });
+        }
     }
 }

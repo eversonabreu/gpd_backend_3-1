@@ -44,8 +44,6 @@ namespace GPD.Backend.Domain.Entities
     {
         public string Identificador { get; set; }
 
-        public bool Ativo { get; set; }
-
         public string Nome { get; set; }
 
         public short? Ordem { get; set; }

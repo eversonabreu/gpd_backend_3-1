@@ -13,7 +13,6 @@ namespace GPD.Backend.Infrastructure.Database.Mappings
             builder.HasKey(bld => bld.Id).HasName("PkIndicador");
             builder.Property(bld => bld.Id).IsRequired();
             builder.Property(bld => bld.Nome).HasMaxLength(IndicadorConsts.TamanhoColunaNome).IsRequired();
-            builder.Property(bld => bld.Ativo).IsRequired();
             builder.Property(bld => bld.Ordem);
             builder.Property(bld => bld.ValorPercentualPeso).HasColumnType("decimal(3, 2)").IsRequired();
             builder.Property(bld => bld.ValorPercentualCriterio).HasColumnType("decimal(3, 2)").IsRequired();

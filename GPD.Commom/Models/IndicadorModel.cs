@@ -10,9 +10,6 @@ namespace GPD.Commom.Models
         [StringLength(maximumLength: IndicadorConsts.TamanhoColunaIdentificador, ErrorMessage = "O idenficador do indicador não pode conter mais que 30 caracteres.")]
         public string Identificador { get; set; }
 
-        [Required(ErrorMessage = "O campo 'Ativo' é obrigatório.")]
-        public bool Ativo { get; set; }
-
         [Required(AllowEmptyStrings = false, ErrorMessage = "O nome do indicador é obrigatório.")]
         [StringLength(maximumLength: IndicadorConsts.TamanhoColunaNome, ErrorMessage = "O nome do indicador não pode conter mais que 255 caracteres.")]
         public string Nome { get; set; }

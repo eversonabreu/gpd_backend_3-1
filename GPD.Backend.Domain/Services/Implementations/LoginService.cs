@@ -29,7 +29,7 @@ namespace GPD.Backend.Domain.Services.Implementations
 
         public IEnumerable<PerfilUsuario> ObterPerfis(long idUsuario) => perfilUsuarioRepository.Filter(item => item.IdUsuario == idUsuario, loadDependencies: true);
 
-        public Usuario ObterUsuario(string login) => usuarioRepository.FirstOrDefault(item => item.Login.Trim().ToUpper() == login.Trim().ToUpper() && item.Ativo, loadDependencies: false);
+        public Usuario ObterUsuario(string cpf) => usuarioRepository.FirstOrDefault(item => item.Cpf == cpf && item.Ativo, loadDependencies: false);
 
         public string GerarSenhaTemporaria()
         {
