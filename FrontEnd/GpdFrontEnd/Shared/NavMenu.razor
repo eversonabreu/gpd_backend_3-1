@@ -1,0 +1,229 @@
+﻿<div class="top-row pl-4 navbar navbar-dark" style="text-align:center;@(mostrarMenu ? "padding-left: 5px !important; padding-right: 6px !important" : null)">
+    <div class="pcssc-popover">
+        <div tabindex="0" class="pure-button popover-toggle popover-toggle-dismissable popover-dismissable-right">
+            <div style="margin-top:-2px;width:47px;height:45px;border-radius:50%;border: 2px solid #007bf7" @onclick="@(() => mostrarMenu = false)">
+                <span class="oi oi-person" style="margin-top:8px;margin-left:0px;color: white;font-size:20px;"></span>
+            </div>
+        </div>
+        <div class="popover popover-right" style="margin-top:-1px; margin-left:90px">
+            <div class="arrow left-arrow" style="margin-top:11px !important"></div>
+            <div class="card" style="width: 18rem">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        Fulano da Silva
+                    </h5>
+                    <p class="card-text">
+                        Administrador
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <button type="button" style="float: left" class="btn btn-link">Alterar senha</button>
+                    <button style="float: right" class="btn btn-danger">Sair</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <a class="navbar-brand" href="" hidden="@mostrarMenu">GPD</a>
+    <button class="navbar-toggler" @onclick="ToggleNavMenu">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+</div>
+
+<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+    <ul class="nav flex-column" @onclick:stopPropagation="true" hidden="@mostrarMenu">
+        <li class="nav-item px-3">
+            <NavLink class="nav-link" style="cursor:pointer" @onclick="@(() => ExpandirMenu("1"))">
+                Administração
+            </NavLink>
+
+            @if (codigoMenu.StartsWith("1"))
+            {
+                <ul class="nav flex-column">
+                    <li class="nav-item px-3" style="padding-top: 5px; padding-bottom: 0px">
+                        <NavLink class="nav-link" href="dashboard">
+                            <span class="oi oi-dashboard" aria-hidden="true"></span> Painel de indicadores
+                        </NavLink>
+                    </li>
+                </ul>
+
+                <ul class="nav flex-column">
+                    <li class="nav-item px-3" style="padding-top: 5px; padding-bottom: 0px">
+                        <NavLink class="nav-link" style="cursor:pointer" @onclick="@(() => ExpandirMenu("1.2"))">
+                            Relatórios
+                        </NavLink>
+
+                        @if (codigoMenu.StartsWith("1.2"))
+                        {
+                            <ul class="nav flex-column">
+                                <li class="nav-item px-3" style="padding-top: 5px; padding-bottom: 0px">
+                                    <NavLink class="nav-link" href="relatorio-indicador">
+                                        <span class="oi oi-document" aria-hidden="true"></span> Indicadores
+                                    </NavLink>
+                                </li>
+                            </ul>
+                        }
+
+                    </li>
+                </ul>
+            }
+
+        </li>
+
+        <li class="nav-item px-3" style="padding-top: 5px; padding-bottom: 0px">
+            <NavLink class="nav-link" style="cursor:pointer" @onclick="@(() => ExpandirMenu("2"))">
+                Cadastros
+            </NavLink>
+
+            @if (codigoMenu.StartsWith("2"))
+            {
+                <ul class="nav flex-column">
+                    <li class="nav-item px-3" style="padding-top: 5px; padding-bottom: 0px">
+                        <NavLink class="nav-link" href="unidade-medida">
+                            <span class="oi oi-target" aria-hidden="true"></span> Unidades de Medida
+                        </NavLink>
+                    </li>
+                </ul>
+
+                <ul class="nav flex-column">
+                    <li class="nav-item px-3" style="padding-top: 5px; padding-bottom: 0px">
+                        <NavLink class="nav-link" href="usuario">
+                            <span class="oi oi-person" aria-hidden="true"></span> Usuários
+                        </NavLink>
+                    </li>
+                </ul>
+
+                <ul class="nav flex-column">
+                    <li class="nav-item px-3" style="padding-top: 5px; padding-bottom: 0px">
+                        <NavLink class="nav-link" href="perfil-usuario">
+                            <span class="oi oi-people" aria-hidden="true"></span> Perfil de Usuário
+                        </NavLink>
+                    </li>
+                </ul>
+
+                <ul class="nav flex-column">
+                    <li class="nav-item px-3" style="padding-top: 5px; padding-bottom: 0px">
+                        <NavLink class="nav-link" href="indicador">
+                            <span class="oi oi-timer" aria-hidden="true"></span> Indicadores
+                        </NavLink>
+                    </li>
+                </ul>
+
+                <ul class="nav flex-column">
+                    <li class="nav-item px-3" style="padding-top: 5px; padding-bottom: 0px">
+                        <NavLink class="nav-link" href="projeto">
+                            <span class="oi oi-folder" aria-hidden="true"></span> Projetos
+                        </NavLink>
+                    </li>
+                </ul>
+
+                <ul class="nav flex-column">
+                    <li class="nav-item px-3" style="padding-top: 5px; padding-bottom: 0px">
+                        <NavLink class="nav-link" href="nivel-organizacional">
+                            <span class="oi oi-puzzle-piece" aria-hidden="true"></span> Nível Organizacional
+                        </NavLink>
+                    </li>
+                </ul>
+
+                <ul class="nav flex-column">
+                    <li class="nav-item px-3" style="padding-top: 5px; padding-bottom: 0px">
+                        <NavLink class="nav-link" href="estrutura-organizacional">
+                            <span class="oi oi-layers" aria-hidden="true"></span> Estrutura Organizacional
+                        </NavLink>
+                    </li>
+                </ul>
+            }
+
+        </li>
+
+        <li class="nav-item px-3" style="padding-top: 5px; padding-bottom: 0px">
+            <NavLink class="nav-link" style="cursor:pointer" @onclick="@(() => ExpandirMenu("3"))">
+                Lançamentos
+            </NavLink>
+
+            @if (codigoMenu.StartsWith("3"))
+            {
+                <ul class="nav flex-column">
+                    <li class="nav-item px-3" style="padding-top: 5px; padding-bottom: 0px">
+                        <NavLink class="nav-link" href="unidade-medida">
+                            <span class="oi oi-spreadsheet" aria-hidden="true"></span> Manual
+                        </NavLink>
+                    </li>
+                </ul>
+
+                <ul class="nav flex-column">
+                    <li class="nav-item px-3" style="padding-top: 5px; padding-bottom: 0px">
+                        <NavLink class="nav-link" href="usuario">
+                            <span class="oi oi-arrow-circle-top" aria-hidden="true"></span> Importação
+                        </NavLink>
+                    </li>
+                </ul>
+            }
+
+        </li>
+
+    </ul>
+</div>
+
+<style type="text/css" media="screen and (max-width:767px)">
+    .exibirBotaoMenu {
+        display: none;
+    }
+</style>
+
+<style type="text/css" media="screen and (min-width:768px)">
+    .exibirBotaoMenu {
+        display: block;
+    }
+</style>
+
+<div style="position:absolute; bottom: 0px" class="exibirBotaoMenu">
+    <button class="btn btn-primary" @onclick="@(() => ToggleNavMenu2())">
+        @if (!mostrarMenu)
+        {
+            <span class="oi oi-fullscreen-exit" style="font-size:26px" aria-hidden="true"></span>
+        }
+        else
+        {
+            <span class="oi oi-fullscreen-enter" style="font-size:26px" aria-hidden="true"></span>
+        }
+    </button>
+</div>
+
+
+@code {
+    private bool collapseNavMenu = true;
+    private bool mostrarMenu = false;
+    private string codigoMenu = string.Empty;
+
+    private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu2()
+    {
+        codigoMenu = string.Empty;
+        mostrarMenu = !mostrarMenu;
+    }
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+
+    private void ExpandirMenu(string codigo)
+    {
+        if (codigoMenu == codigo)
+        {
+            if (codigoMenu == "1" || codigoMenu == "2")
+            {
+                codigoMenu = string.Empty;
+            }
+            else if (codigoMenu == "1.2")
+            {
+                codigoMenu = "1";
+            }
+        }
+        else
+        {
+            codigoMenu = codigo;
+        }
+    }
+}

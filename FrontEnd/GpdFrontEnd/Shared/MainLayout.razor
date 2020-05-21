@@ -1,0 +1,23 @@
+﻿@inherits LayoutComponentBase
+@inject GpdFrontEnd.Infraestructure.Session session
+@inject IJSRuntime jsRunTime
+@inject NavigationManager navigation
+
+<div class="sidebar" style="width: auto; background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #007bff 100%)">
+    <NavMenu />
+</div>
+
+<div class="main">
+    <div class="content px-4">
+        @Body
+    </div>
+</div>
+
+@code
+{
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // await session.GetUserAsync();
+        await base.OnAfterRenderAsync(firstRender);
+    }
+}

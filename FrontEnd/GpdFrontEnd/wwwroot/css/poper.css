@@ -1,0 +1,89 @@
+﻿.pcssc-popover {
+    display: inline-block
+}
+
+    .pcssc-popover .popover-toggle-dismissable, .pcssc-popover .popover-toggle-label {
+        cursor: pointer
+    }
+
+    .pcssc-popover .popover-toggle:checked ~ .popover {
+        display: block
+    }
+
+    .pcssc-popover .popover-toggle.popover-toggle-dismissable.popover-dismissable-right {
+        float: left
+    }
+
+    .pcssc-popover .popover-toggle.popover-toggle-dismissable:focus {
+        outline: 0
+    }
+
+        .pcssc-popover .popover-toggle.popover-toggle-dismissable:focus + .popover {
+            display: block
+        }
+
+            .pcssc-popover .popover-toggle.popover-toggle-dismissable:focus + .popover.popover-right {
+                display: inherit;
+                margin-left: 25px;
+                margin-top: -35px;
+                float: right;
+                z-index: 99999
+            }
+
+                .pcssc-popover .popover-toggle.popover-toggle-dismissable:focus + .popover.popover-right .left-arrow {
+                    position: absolute;
+                    margin-left: -18px;
+                    margin-top: 12%;
+                    width: 0;
+                    height: 0;
+                    border-top: 15px solid transparent;
+                    border-bottom: 15px solid transparent;
+                    border-right: 15px solid #f7f7f7;
+                    z-index: 99999
+                }
+
+    .pcssc-popover .popover {
+        position: absolute;
+        display: none;
+        max-width: 276px;
+        padding: 1px;
+        line-break: auto;
+        line-height: 1.5;
+        word-wrap: break-word;
+        background-clip: padding-box;
+        z-index: 99999
+    }
+
+        .pcssc-popover .popover.popover-bottom {
+            margin-top: 30px
+        }
+
+            .pcssc-popover .popover.popover-bottom .up-arrow {
+                position: relative;
+                width: 0;
+                height: 0;
+                border-left: 15px solid transparent;
+                border-right: 15px solid transparent;
+                border-bottom: 15px solid #f7f7f7;
+                z-index: 99999;
+                margin-top: -16px;
+                left: 50%;
+                margin-left: -11px
+            }
+
+        .pcssc-popover .popover .popover-title {
+            padding: 8px 14px;
+            margin-bottom: 0;
+            margin-top: 0;
+            border-top-right-radius: calc(-.7rem);
+            border-top-left-radius: calc(-.7rem)
+        }
+
+        .pcssc-popover .popover .popover-content {
+            padding: 9px 14px
+        }
+
+            .pcssc-popover .popover .popover-content p {
+                margin-top: 0;
+                margin-bottom: 1rem
+            }
