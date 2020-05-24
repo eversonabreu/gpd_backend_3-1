@@ -36,7 +36,7 @@ namespace GPD.Backend.Api.Identity
 
             try
             {
-                const int limitHoursToken = 3;
+                const int limitHoursToken = 24;
                 string bearer = httpContext.Request.Headers["Authorization"];
                 bearer = bearer.Replace("Bearer ", string.Empty);
                 string jsonUser = bearer.Decrypt();
@@ -77,7 +77,7 @@ namespace GPD.Backend.Api.Identity
             try
             {
                 string credentials = httpContext.Request.Headers["Authorization"];
-                string json = credentials.Decrypt();
+                string json = credentials.Replace("Bearer ", string.Empty).Decrypt();
                 var jsonValue = System.Text.Json.JsonSerializer.Deserialize<Login>(json);
                 var user = loginService.ObterUsuario(jsonValue.LoginValue);
                 if (user.Senha.Decrypt() != jsonValue.Password)

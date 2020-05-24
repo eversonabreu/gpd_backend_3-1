@@ -17,7 +17,7 @@
 {
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        // await session.GetUserAsync();
+        await session.GetTokenAsync();
         await base.OnAfterRenderAsync(firstRender);
     }
 }

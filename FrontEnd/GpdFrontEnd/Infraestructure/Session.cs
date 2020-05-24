@@ -1,4 +1,5 @@
 ﻿using Blazored.SessionStorage;
+using GPD.Commom.UserInformations;
 using Microsoft.AspNetCore.Components;
 using System.Threading.Tasks;
 
@@ -16,7 +17,20 @@ namespace GpdFrontEnd.Infraestructure
             this.navigation = navigation;
         }
 
-        public async Task<string> GetUserAsync(string page = null)
+        public async void SetTokenAsync(string token) => await sessionStorage.SetItemAsync("V_USER", token);
+
+        public async Task<string> GetTokenAsync()
+        {
+            string result = await sessionStorage.GetItemAsync<string>("V_USER");
+            if (result is null)
+            {
+                navigation.NavigateTo("/login");
+            }
+
+            return result;
+        }
+    
+        public async Task<User> GetUserAsync(string page = null)
         {
             string dataUser = await sessionStorage.GetItemAsync<string>("V_USER");
 
@@ -26,6 +40,9 @@ namespace GpdFrontEnd.Infraestructure
                 return null;
             }
 
+            string jsonUser = GPD.Commom.Utils.Cryptography.Decrypt(dataUser);
+            User user = System.Text.Json.JsonSerializer.Deserialize<User>(jsonUser);
+
             if (page != null)
             {
                 // validar o acesso a página...
@@ -34,7 +51,7 @@ namespace GpdFrontEnd.Infraestructure
                 return null;
             }
 
-            return dataUser;
+            return user;
         }
 
         public async Task LogoutAsync()

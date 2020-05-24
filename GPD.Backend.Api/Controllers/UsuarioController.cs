@@ -25,7 +25,7 @@ namespace GPD.Backend.Api.Controllers
         }
 
         [Route("login-account"), HttpPost, AllowAnonymous]
-        public void Login() => UserIdentity.GetToken(loginService);
+        public string Login() => UserIdentity.GetToken(loginService);
 
         public override long Post([FromBody] UsuarioModel model)
         {

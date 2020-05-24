@@ -23,7 +23,7 @@ namespace GPD.Backend.Infrastructure.Database.Repositories.Base
 
         public BaseRepository(IServiceProvider serviceProvider)
         {
-            databaseContext = serviceProvider.GetRequiredService(typeof(DatabaseContext)) as DatabaseContext;
+            databaseContext = serviceProvider.GetService(typeof(DatabaseContext)) as DatabaseContext;
             dbSet = databaseContext.Set<TEntity>();
             this.serviceProvider = serviceProvider;
         }
@@ -44,7 +44,7 @@ namespace GPD.Backend.Infrastructure.Database.Repositories.Base
                         {
                             long idLoad = (long)valueObject;
 
-                            var repository = serviceProvider.GetRequiredService(attribute.TypeRepository);
+                            var repository = serviceProvider.GetService(attribute.TypeRepository);
                             var entityObject = repository.GetType().GetMethod(nameof(GetById)).Invoke(repository, new object[] { idLoad, false });
 
                             if (entityObject != null)

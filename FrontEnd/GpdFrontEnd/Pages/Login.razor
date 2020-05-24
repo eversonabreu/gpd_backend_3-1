@@ -2,9 +2,10 @@
 @page "/login"
 @page "/login/{Text}"
 @inject NavigationManager nav
-@inject Blazored.SessionStorage.ISessionStorageService sessionStorage
 @inject IJSRuntime jsRuntime
-
+@inject GpdFrontEnd.Services.System.EnvironmentService environment
+@inject GpdFrontEnd.Infraestructure.Session session
+@inject HttpClient http
 
 <style>
 
@@ -99,24 +100,22 @@
                 </div>
             </div>
             <div class="card-body">
-                <form>
                     <div class="input-group form-group">
                         <div class="input-group-prepend">
                             <span class="input-group-text"><i class="oi oi-account-login"></i></span>
                         </div>
-                        <input type="text" class="form-control" placeholder="Digite seu CPF" maxlength="11" oninput="mascaraCpf(this)" onpaste="return false" />
+                        <input type="text" @bind="cpf" class="form-control" placeholder="Digite seu CPF" maxlength="11" oninput="mascaraCpf(this)" onpaste="return false" />
 
                     </div>
                     <div class="input-group form-group">
                         <div class="input-group-prepend">
                             <span class="input-group-text"><i class="oi oi-key"></i></span>
                         </div>
-                        <input type="password" class="form-control" placeholder="Digite sua senha" />
+                        <input type="password" @bind-value="password" @bind-value:event="oninput" class="form-control" placeholder="Digite sua senha" />
                     </div>
                     <div class="form-group">
-                        <button class="btn float-right login_btn" @onclick="Entrar">Entrar</button>
+                        <button type="button" class="btn float-right login_btn" @onclick="EntrarAsync" disabled="@(GetCpf().Length != 11 || string.IsNullOrEmpty(password) || password.Length < 4)">Entrar</button>
                     </div>
-                </form>
             </div>
             <div class="card-footer">
                 <div class="d-flex justify-content-center">
@@ -132,6 +131,19 @@
     [Parameter]
     public string Text { get; set; }
 
+    private string cpf;
+    private string password;
+
+    private string GetCpf()
+    {
+        if ((cpf?.Trim().Length ?? 0) == 14)
+        {
+            return cpf.Trim().Replace(".", string.Empty).Replace("-", string.Empty);
+        }
+
+        return string.Empty;
+    }
+
     protected override void OnInitialized()
     {
         Console.WriteLine(Text);
@@ -143,10 +155,34 @@
         base.OnInitialized();
     }
 
-    private async Task Entrar()
+    private async Task EntrarAsync()
     {
-        await jsRuntime.InvokeVoidAsync("removeShowLogin");
-        await sessionStorage.SetItemAsync("V_USER", 1);
-        nav.NavigateTo("/");
+        try
+        {
+            var login = new GPD.Commom.UserInformations.Login
+            {
+                LoginValue = GetCpf(),
+                Password = password
+            };
+
+            string json = System.Text.Json.JsonSerializer.Serialize(login);
+            json = GPD.Commom.Utils.Cryptography.Encrypt(json);
+            http.DefaultRequestHeaders.Clear();
+            http.DefaultRequestHeaders.Add("Authorization", $"Bearer {json}");
+
+            var result = await http.PostAsync("usuario/login-account", null);
+            session.SetTokenAsync(result.Content.ReadAsStringAsync().Result);
+
+            await jsRuntime.InvokeVoidAsync("removeShowLogin");
+            nav.NavigateTo("/");
+        }
+        catch (Exception exc)
+        {
+            while (exc != null)
+            {
+                await jsRuntime.InvokeVoidAsync("alert", exc.Message + " - " + exc.GetType().ToString());
+                exc = exc.InnerException;
+            }
+        }
     }
 }

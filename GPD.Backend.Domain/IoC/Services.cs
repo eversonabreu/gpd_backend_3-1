@@ -36,9 +36,9 @@ namespace GPD.Backend.Domain.IoC
 
         public static void AddBusinessServices(this IServiceCollection services)
         {
-            services.AddSingleton<ILoginService, LoginService>();
-            services.AddSingleton<IIndicadorLancamentosService, IndicadorLancamentosService>();
-            services.AddSingleton<IEmailService, EmailService>();
+            services.AddTransient<ILoginService, LoginService>();
+            services.AddTransient<IIndicadorLancamentosService, IndicadorLancamentosService>();
+            services.AddTransient<IEmailService, EmailService>();
         }
     }
 }
