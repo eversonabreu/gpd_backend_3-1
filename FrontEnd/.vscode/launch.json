@@ -15,8 +15,8 @@
             }
         },
         {
-            "name": ".NET Core Debug Blazor Web Assembly in Chrome",
-            "type": "pwa-chrome",
+            "name": ".NET Core Debug Edge",
+            "type": "pwa-msedge",
             "request": "launch",
             "timeout": 30000,
             "url": "http://localhost:5002",

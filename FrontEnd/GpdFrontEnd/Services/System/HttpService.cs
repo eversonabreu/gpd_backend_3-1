@@ -7,27 +7,32 @@ using System.Threading.Tasks;
 
 namespace GpdFrontEnd.Services.System
 {
-    internal class HttpService : ComponentBase, IHttpService
+    public class HttpService : ComponentBase
     {
-        private readonly EnvironmentService environmentService;
+        private readonly HttpClient httpClient;
         private readonly Session session;
         private readonly string controllerName;
 
-        public HttpService(EnvironmentService environmentService, Session session, string controllerName)
+        public HttpService(HttpClient httpClient, Session session, string controllerName)
         {
-            this.environmentService = environmentService;
+            this.httpClient = httpClient;
             this.session = session;
             this.controllerName = controllerName;
         }
 
-        private HttpClient GetHttp()
+        public async Task<HttpClient> GetHttpAsync()
         {
-            string token = session.GetTokenAsync().Result;
+            string token = await session.GetTokenAsync();
             var http = new HttpClient();
             http.DefaultRequestHeaders.Clear();
             http.DefaultRequestHeaders.Add("authorization", $"Bearer {token}");
-            http.BaseAddress = new Uri($"{environmentService.BaseUri}/{controllerName}");
+            http.BaseAddress = new Uri($"{httpClient.BaseAddress.AbsoluteUri}{controllerName}");
             return http;
+        }
+
+        public async Task GetAsync<TResult>(Action<TResult> success, Action<Exception> error, Action complete = null)
+        {
+            await GetAsync<TResult>(string.Empty, success, error, complete);
         }
 
         public async Task GetAsync<TResult>(string uri, Action<TResult> success, Action<Exception> error, Action complete = null)
@@ -37,7 +42,7 @@ namespace GpdFrontEnd.Services.System
             Exception errorSuccess = null;
             HttpResponseMessage httpResponseMessage = null;
 
-            using (var http = GetHttp())
+            using (var http = await GetHttpAsync())
             {
                 try
                 {

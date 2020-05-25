@@ -3,11 +3,9 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Blazored.SessionStorage;
 using GpdFrontEnd.Infraestructure;
-using GpdFrontEnd.Services.System;
+using GpdFrontEnd.Services;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Configuration;
-using System.IO;
 
 namespace GpdFrontEnd
 {
@@ -17,19 +15,16 @@ namespace GpdFrontEnd
         {
             var builder = WebAssemblyHostBuilder.CreateDefault(args);
             builder.RootComponents.Add<App>("app");
-
-            // var dir = Directory.GetCurrentDirectory();
-            // var builder2 = new ConfigurationBuilder()
-            //     .SetBasePath(Path.Combine("", "wwwroot"))
-            //     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
-            //     .Build();
-
-            builder.Services.AddTransient(sp => new HttpClient { BaseAddress = new Uri("http://localhost:5000/") });
-
+            builder.Services.AddTransient(sp => new HttpClient { BaseAddress = new Uri("http://192.168.185.151:5020/") });
             builder.Services.AddBlazoredSessionStorage();
-            builder.Services.AddSingleton(new EnvironmentService("Development", "http://localhost:5000/"));
             builder.Services.AddScoped<Session>();
+            AddServices(builder.Services);
             await builder.Build().RunAsync();
+        }
+
+        private static void AddServices(IServiceCollection services)
+        {
+            services.AddScoped<UsuarioService>();
         }
     }
 }

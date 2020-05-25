@@ -1,0 +1,228 @@
+@typeparam TItem
+
+<style>
+    .color-action:hover {
+        background-color: #A9E2F3
+    }
+</style>
+
+<div class="table-responsive">
+    <div class="card">
+
+        <div class="card-body">
+
+            <table class="table table-hover table-bordered">
+
+                @if (Data != null && Columns != null && Columns.Any())
+                {
+                    <thead style="border-bottom: solid #007bff">
+                        <tr>
+
+                            @if (!string.IsNullOrWhiteSpace(CheckBoxProperty))
+                            {
+                                <th style="width:25px"></th>
+                            }
+
+                            @foreach (var col in Columns)
+                            {
+                                string width = !string.IsNullOrWhiteSpace(col.Width) ? $"width:{col.Width}" : "width:auto";
+                                <th style="@width">@col.DisplayName</th>
+                            }
+
+                            @if (OnDelete != null)
+                            {
+                                <th style="width:40px"></th>
+                            }
+
+                            @if (OnEdit != null)
+                            {
+                                <th style="width:40px"></th>
+                            }
+                        </tr>
+                    </thead>
+
+                    <tbody style="cursor:pointer">
+
+                        @if (Data?.Any() ?? false)
+                        {
+                            SemDadosParaExibir = false;
+                            var properties = typeof(TItem).GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+
+                            foreach (var item in Data)
+                            {
+                                <tr style="line-height:10px" @ondblclick="@(() => OnEdit?.Invoke(item))">
+
+                                    @if (!string.IsNullOrWhiteSpace(CheckBoxProperty))
+                                    {
+                                        var property = properties.First(pro => pro.Name == CheckBoxProperty);
+                                        var value = Convert.ToBoolean(property.GetValue(item));
+
+                                        <th>
+                                            <input type="checkbox" style="width:20px; height:20px" checked="@value" @onclick="@(() => OnCheckBox?.Invoke(item, !value))" />
+                                        </th>
+                                    }
+
+                                    @foreach (var col in Columns)
+                                    {
+                                        var property = properties.First(pro => pro.Name == col.PropertyName);
+                                        var value = property.GetValue(item);
+                                        string resultValue = value?.ToString();
+
+                                        if (value != null)
+                                        {
+                                            if (property.PropertyType == typeof(decimal) || property.PropertyType == typeof(decimal?))
+                                            {
+                                                var decimalValue = Convert.ToDecimal(value);
+                                                resultValue = string.IsNullOrWhiteSpace(col.DisplayFormat) ? decimalValue.ToString() : decimalValue.ToString(col.DisplayFormat);
+                                            }
+                                            else if (property.PropertyType == typeof(DateTime) || property.PropertyType == typeof(DateTime?))
+                                            {
+                                                var dateTimeValue = Convert.ToDateTime(value);
+                                                resultValue = string.IsNullOrWhiteSpace(col.DisplayFormat) ? dateTimeValue.ToString() : dateTimeValue.ToString(col.DisplayFormat);
+                                            }
+                                            else if (property.PropertyType == typeof(TimeSpan) || property.PropertyType == typeof(TimeSpan?))
+                                            {
+                                                var timeValue = Convert.ToDateTime(value).TimeOfDay;
+                                                resultValue = string.IsNullOrWhiteSpace(col.DisplayFormat) ? timeValue.ToString() : timeValue.ToString(col.DisplayFormat);
+                                            }
+                                        }
+
+                                        <td>@resultValue</td>
+                                    }
+
+                                    @if (OnDelete != null)
+                                    {
+                                        <td @onclick="@(() => OnDelete(item))" class="color-action">
+                                            <span class="oi oi-trash" style="color:red"></span>
+                                        </td>
+                                    }
+
+                                    @if (OnEdit != null)
+                                    {
+                                        <td @onclick="@(() => OnEdit(item))" class="color-action">
+                                            <span class="oi oi-eye" style="color:#007bff"></span>
+                                        </td>
+                                    }
+
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            SemDadosParaExibir = true;
+                        }
+
+                    </tbody>
+
+                }
+                else
+                {
+                    <thead><tr><th></th></tr></thead>
+                    <tbody><tr><td style="font-style:italic">Aplique um filtro para obter resultados</td></tr></tbody>
+                }
+
+            </table>
+
+        </div>
+
+        <div class="card-footer">
+            @if (SemDadosParaExibir)
+            {
+                <div style="float:left">
+                    <p style="font-style:italic">Sem dados para exibir</p>
+                </div>
+            }
+
+            <div style="float:right">
+                <button class="btn btn-default" disabled="@(paginaAtual <= 0)" @onclick="VoltarPagina"><span class="oi oi-arrow-circle-left" style="font-size:18px"></span></button>
+                @ObterPaginalAtual() de @GetTotalPages()
+                <button class="btn btn-default" disabled="@(paginaAtual + 1 >= GetTotalPages())" @onclick="AvancarPagina"><span class="oi oi-arrow-circle-right" style="font-size:18px"></span></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    private int paginaAtual = 0;
+
+    [Parameter]
+    public IEnumerable<TItem> Data { get; set; }
+
+    [Parameter]
+    public IEnumerable<Column> Columns { get; set; }
+
+    [Parameter]
+    public Action<int> OnPaginate { get; set; }
+
+    [Parameter]
+    public int Count { get; set; }
+
+    [Parameter]
+    public Action<TItem> OnDelete { get; set; }
+
+    [Parameter]
+    public Action<TItem> OnEdit { get; set; }
+
+    [Parameter]
+    public string CheckBoxProperty { get; set; }
+
+    [Parameter]
+    public Action<TItem, bool> OnCheckBox { get; set; }
+
+    private bool SemDadosParaExibir;
+
+    private void VoltarPagina()
+    {
+        if (OnPaginate != null)
+        {
+            paginaAtual--;
+            OnPaginate(paginaAtual);
+        }
+    }
+
+    private void AvancarPagina()
+    {
+        if (OnPaginate != null)
+        {
+            paginaAtual++;
+            OnPaginate(paginaAtual);
+        }
+    }
+
+    private int GetTotalPages()
+    {
+        if (Count == 0)
+        {
+            return 0;
+        }
+
+        decimal value = Count / 10m;
+        int result = (int)Math.Ceiling(value);
+        return result;
+    }
+
+    private int ObterPaginalAtual()
+    {
+        if (Count == 0)
+        {
+            return 0;
+        }
+
+        if (paginaAtual <= 0) return 1;
+        int totalPages = GetTotalPages();
+        if (paginaAtual + 1 > totalPages) return totalPages;
+        return paginaAtual + 1;
+    }
+
+    public struct Column
+    {
+        public string PropertyName { get; set; }
+
+        public string DisplayName { get; set; }
+
+        public string Width { get; set; }
+
+        public string DisplayFormat { get; set; }
+    }
+}

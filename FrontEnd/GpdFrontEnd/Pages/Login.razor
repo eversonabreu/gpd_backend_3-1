@@ -3,13 +3,10 @@
 @page "/login/{Text}"
 @inject NavigationManager nav
 @inject IJSRuntime jsRuntime
-@inject GpdFrontEnd.Services.System.EnvironmentService environment
 @inject GpdFrontEnd.Infraestructure.Session session
 @inject HttpClient http
 
 <style>
-
-
     .container {
         height: 100%;
         align-content: center;
@@ -29,10 +26,10 @@
         color: #FFC312;
     }
 
-        .social_icon span:hover {
-            color: white;
-            cursor: pointer;
-        }
+    .social_icon span:hover {
+        color: white;
+        cursor: pointer;
+    }
 
     .card-header h5 {
         color: white;
@@ -60,12 +57,12 @@
         color: white;
     }
 
-        .remember input {
-            width: 20px;
-            height: 20px;
-            margin-left: 15px;
-            margin-right: 5px;
-        }
+    .remember input {
+        width: 20px;
+        height: 20px;
+        margin-left: 15px;
+        margin-right: 5px;
+    }
 
     .login_btn {
         color: black;
@@ -73,20 +70,19 @@
         width: 100px;
     }
 
-        .login_btn:hover {
-            color: black;
-            background-color: white;
-        }
+    .login_btn:hover {
+        color: black;
+        background-color: white;
+    }
 
     .links {
         color: white;
     }
 
-        .links a {
-            margin-left: 4px;
-        }
+    .links a {
+        margin-left: 4px;
+    }
 </style>
-
 
 <div class="container" style="margin-top:50px">
     <div class="d-flex justify-content-center h-100">
@@ -104,17 +100,21 @@
                         <div class="input-group-prepend">
                             <span class="input-group-text"><i class="oi oi-account-login"></i></span>
                         </div>
-                        <input type="text" @bind="cpf" class="form-control" placeholder="Digite seu CPF" maxlength="11" oninput="mascaraCpf(this)" onpaste="return false" />
+                        <input id="cpfLogin" autofocus type="text" @bind="cpf" class="form-control" placeholder="Digite seu CPF" maxlength="11" oninput="mascaraCpf(this)" onpaste="return false" />
 
                     </div>
                     <div class="input-group form-group">
                         <div class="input-group-prepend">
                             <span class="input-group-text"><i class="oi oi-key"></i></span>
                         </div>
-                        <input type="password" @bind-value="password" @bind-value:event="oninput" class="form-control" placeholder="Digite sua senha" />
+                        <input @onkeydown="KeyDown" type="password" @bind-value="password" @bind-value:event="oninput" class="form-control" placeholder="Digite sua senha" />
                     </div>
                     <div class="form-group">
                         <button type="button" class="btn float-right login_btn" @onclick="EntrarAsync" disabled="@(GetCpf().Length != 11 || string.IsNullOrEmpty(password) || password.Length < 4)">Entrar</button>
+                    </div>
+
+                    <div class="row" hidden="@(!usuarioSenhaIncorreto)">
+                        <small style="color:white">Usuário ou senha incorretos</small>
                     </div>
             </div>
             <div class="card-footer">
@@ -133,6 +133,7 @@
 
     private string cpf;
     private string password;
+    private bool usuarioSenhaIncorreto;
 
     private string GetCpf()
     {
@@ -144,21 +145,40 @@
         return string.Empty;
     }
 
-    protected override void OnInitialized()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        Console.WriteLine(Text);
+        if (firstRender)
+        {
+            await jsRuntime.InvokeVoidAsync("focus", "cpfLogin");
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
         if (string.IsNullOrWhiteSpace(Text))
         {
             nav.NavigateTo("login/account", true);
         }
 
-        base.OnInitialized();
+        await base.OnInitializedAsync();
+    }
+
+    private async Task KeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter")
+        {
+            await EntrarAsync();
+        }
     }
 
     private async Task EntrarAsync()
     {
         try
         {
+            usuarioSenhaIncorreto = false;
+            StateHasChanged();
             var login = new GPD.Commom.UserInformations.Login
             {
                 LoginValue = GetCpf(),
@@ -171,18 +191,23 @@
             http.DefaultRequestHeaders.Add("Authorization", $"Bearer {json}");
 
             var result = await http.PostAsync("usuario/login-account", null);
-            session.SetTokenAsync(result.Content.ReadAsStringAsync().Result);
+            string token = result.Content.ReadAsStringAsync().Result;
+
+            if (token.Contains("401 - "))
+            {
+                throw new Exception(token);
+            }
+
+            session.SetTokenAsync(token);
 
             await jsRuntime.InvokeVoidAsync("removeShowLogin");
             nav.NavigateTo("/");
         }
         catch (Exception exc)
         {
-            while (exc != null)
-            {
-                await jsRuntime.InvokeVoidAsync("alert", exc.Message + " - " + exc.GetType().ToString());
-                exc = exc.InnerException;
-            }
+            Console.WriteLine(exc.Message);
+            usuarioSenhaIncorreto = true;
+            StateHasChanged();
         }
     }
 }

@@ -1,0 +1,32 @@
+@page "/usuario-consulta"
+@inject GpdFrontEnd.Services.UsuarioService usuarioService
+
+<DataTable TItem="Usuario" Data="data"/>
+
+
+@code 
+{
+    private IEnumerable<Usuario> data;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender) 
+    {
+        if (firstRender)
+        {
+            await usuarioService.GetAsync<IEnumerable<Usuario>>(success => 
+            {
+                data = success;
+            }, error => 
+            {
+                Console.WriteLine("Deu erro - " + error.Message);
+            });
+        }
+    }
+    
+
+    class Usuario
+    {
+        public string Nome {get; set;}
+
+        public string Cpf {get; set;}
+    }
+}
