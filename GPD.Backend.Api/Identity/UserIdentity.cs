@@ -42,7 +42,7 @@ namespace GPD.Backend.Api.Identity
                 string jsonUser = bearer.Decrypt();
                 var result = System.Text.Json.JsonSerializer.Deserialize<User>(jsonUser);
 
-				if (DateTime.UtcNow.Substract(result.DateTimeLogin).TotalHours > limitHoursToken)
+				if (DateTime.UtcNow.Subtract(result.DateTimeLogin).TotalHours > limitHoursToken)
                 {
                     throw new ExpirationTokenException("401 - Token expirado! Faça login novamente.");
                 }
