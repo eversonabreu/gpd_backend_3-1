@@ -12,6 +12,7 @@ using System.Reflection;
 using System.Collections.Generic;
 using GPD.Backend.Domain.IoC;
 using GPD.Backend.Domain.Services.Implementations;
+using Microsoft.AspNetCore.Mvc.Formatters;
 
 namespace GPD.Backend.Api
 {
@@ -45,7 +46,11 @@ namespace GPD.Backend.Api
             services.AddDbContext<DatabaseContext>(options => options.UseNpgsql(DatabaseContext.GetDatabaseStringConnection(configuration)));
             services.AddScoped<DatabaseContext>();
 
-            services.AddMvc(opt => opt.EnableEndpointRouting = false);
+            services.AddMvc(options =>
+            {
+                options.EnableEndpointRouting = false;
+            }).AddNewtonsoftJson();
+
             services.AddCors(options =>
             {
                 options.AddPolicy("AllowSpecificOrigin",

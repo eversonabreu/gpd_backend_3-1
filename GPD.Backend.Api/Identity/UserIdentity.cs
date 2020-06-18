@@ -29,6 +29,7 @@ namespace GPD.Backend.Api.Identity
 
         public User GetUser()
         {
+            //System.Diagnostics.Debugger.Launch();
             if (httpContext.Request.Path.Value.Contains("login-account"))
             {
                 return null!;

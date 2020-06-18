@@ -196,7 +196,7 @@ namespace GPD.Backend.Infrastructure.Database.Repositories.Base
             }
             transaction.Commit();
         }
-
+		
         protected virtual void BeforeAdd(TEntity entity) { }
 
         protected virtual void AfterAdd(TEntity entity) { }

@@ -70,9 +70,10 @@ namespace GPD.Backend.Infrastructure.Database
             string pooling = configuration["DatabaseConnectionSettings:Pooling"];
             string minPoolSize = configuration["DatabaseConnectionSettings:MinPoolSize"];
             string maxPoolSize = configuration["DatabaseConnectionSettings:MaxPoolSize"];
+			string connectionLifeTime = configuration["DatabaseConnectionSettings:ConnectionLifeTime"];
 
             string connectionStringDatabase = string.Format($"{connectionDatabaseStringBase}", userId,
-                                                            password, host, port, database, pooling, minPoolSize, maxPoolSize);
+                                                            password, host, port, database, pooling, minPoolSize, maxPoolSize, connectionLifeTime);
             return connectionStringDatabase;
         }
 

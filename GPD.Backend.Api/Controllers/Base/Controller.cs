@@ -72,7 +72,7 @@ namespace GPD.Backend.Api.Controllers.Base
             }
 
             var result = repository.FilterWithPagination(filter, sort, page, limit, loadDependencies);
-            return new ResultSet<IEnumerable<TEntity>>(result.Data, result.Count);
+            return new ResultSet<IEnumerable<TEntity>>(result.Data, result.Count); ;
         }
     }
 }
