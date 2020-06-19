@@ -1,32 +1,220 @@
 @page "/usuario-consulta"
-@inject GpdFrontEnd.Services.UsuarioService usuarioService
+@inject GpdFrontEnd.Services.System.HttpService httpService
+@inject NotificationService notificationService
+@inject IJSRuntime js
+@inject NavigationManager navigation
 
-<DataTable TItem="Usuario" Data="data"/>
+<nav class="navbar navbar-default navbar-fixed-top" style="height:56px; background-image: linear-gradient(180deg, #b0d2f7 100%, #007bff 0%); justify-content:center">
+    <button class="btn btn-primary" style="background-color: #007bff !important" @onclick="AdicionarUsuario"><span class="oi oi-plus"></span> Adicionar usuário</button>
+</nav>           
 
+<div class="row" style="margin-top:10px"> 
+    <div class="col-md-8 mx-auto">
+        <div class="input-group">
+            <input @bind-value="filter" @bind-value:event="oninput" @onkeydown="KeyDownPesquisarAsync" class="form-control" type="search" placeholder="Digite aqui para pesquisar..." aria-label="Search" style="border-right: none;">
+            <div class="input-group-append">
+                <div @onclick="PesquisarAsync" class="input-group-text" style="background-color: #FFF"><span class="oi oi-magnifying-glass"></span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row" style="margin-top:20px"> 
+    <div class="col-md-10 mx-auto">
+        <DataTable @ref="dataTable" TItem="Usuario" Data="data" Count="count" Columns="columns" OnPaginate="OnPaginateAsync" OnEdit="OnEditUsuario" OnDelete="OnDeleteUsuarioAsync"/>
+    </div>
+</div>
+
+<Loader Visible="loaderVisible"/>
 
 @code 
 {
-    private IEnumerable<Usuario> data;
+    private DataTable<Usuario> dataTable;
+    private IList<Usuario> data;
+    private IList<DataTable<Usuario>.Column> columns;
+    private int count;
+    private string filter;
+    private int page = 0;
+    private bool loaderVisible;
 
-    protected override async Task OnAfterRenderAsync(bool firstRender) 
+    private void AdicionarUsuario() => navigation.NavigateTo("/usuario-cadastro");
+
+    private async Task OnPaginateAsync(int page)
     {
-        if (firstRender)
+        this.page = page;
+        await RefreshPageAsync();
+    }
+
+    private async Task RefreshPageAsync()
+    {
+        if ((filter?.Trim().Length ?? 0) < 3)
         {
-            await usuarioService.GetAsync<IEnumerable<Usuario>>(success => 
-            {
-                data = success;
-            }, error => 
-            {
-                Console.WriteLine("Deu erro - " + error.Message);
-            });
+            navigation.NavigateTo("/usuario-consulta", true);
+        }
+        else
+        {
+            await PesquisarAsync();
         }
     }
-    
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        columns = new List<DataTable<Usuario>.Column>();
+        columns.Add(new DataTable<Usuario>.Column
+        {
+            PropertyName = "Nome",
+            DisplayName = "Nome"
+        });
+        columns.Add(new DataTable<Usuario>.Column
+        {
+            PropertyName = "Cpf",
+            DisplayName = "Cpf"
+        });
+        columns.Add(new DataTable<Usuario>.Column
+        {
+            PropertyName = "Email",
+            DisplayName = "E-mail"
+        });
+        columns.Add(new DataTable<Usuario>.Column
+        {
+            PropertyName = "_Administrador",
+            DisplayName = "Administrador"
+        });
+        columns.Add(new DataTable<Usuario>.Column
+        {
+            PropertyName = "_Ativo",
+            DisplayName = "Ativo"
+        });
+        data = new List<Usuario>();
+    }
+
+    private async Task KeyDownPesquisarAsync(KeyboardEventArgs key)
+    {
+        if (key.Key.ToUpper() == "ENTER")
+        {
+            await PesquisarAsync();
+        }
+    }
+
+    private async Task PesquisarAsync()
+    {
+        if ((filter?.Trim().Length ?? 0) < 3)
+        {
+            notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Warning, Summary = "Alerta", Detail = "Insira no mínimo três (3) caracteres para pesquisar", Duration = 5000 });
+            return;
+        }
+
+        await BuscarUsuarioAsync();
+    }
+
+    private string GetFilter()
+    {
+        string filterAux = filter.Replace("\"", "'").Trim().TrimEnd('\\').ToUpper();
+
+        if (filterAux.Length < 3)
+        {
+            return "false";
+        }
+
+        string expression  = $"Nome.Trim().ToUpper().Contains(\"{filterAux}\") || Email.Trim().ToUpper().Contains(\"{filterAux}\") || Cpf.Trim().Contains(\"{filterAux}\")";
+        return System.Web.HttpUtility.UrlEncode(expression);
+    }
+
+    private async Task BuscarUsuarioAsync()
+    {
+        var http = await httpService.GetHttpAsync();
+        if (http != null)
+        {
+            SetVisibleLoader(true);
+            try
+            {
+                string expression = GetFilter();
+                var response = await http.GetAsync($"usuario?filter={expression}&page={page}&limit={dataTable.CountItemsInPage}");
+                if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
+                {
+                    throw new Exception(response.Content.ReadAsStringAsync().Result);
+                }
+
+                this.page = 0;
+                var result = await httpService.GetResultSetAsync<Usuario>(response);
+                data = result.Data;
+                count = result.Count; 
+            }
+            catch (Exception exc)
+            {
+                data = null;
+                count = 0;
+                Console.WriteLine(exc.Message);
+                notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = "Erro", Detail = "Um erro aconteceu ao realizar a pesquisa.", Duration = 5000 });
+            }
+            SetVisibleLoader(false);
+        }
+    }
+
+    private void SetVisibleLoader(bool visible)
+    {
+        loaderVisible = visible;
+        StateHasChanged();
+    }
+
+    private void OnEditUsuario(Usuario usuario)
+    {
+
+    }
+
+    private async Task OnDeleteUsuarioAsync(Usuario usuario)
+    {
+        var result = await js.InvokeAsync<bool>("confirm", "Tem certeza que deseja excluir este usuário.");
+        if (result == true)
+        {
+            var http = await httpService.GetHttpAsync();
+            if (http != null)
+            {
+                SetVisibleLoader(true);
+                try
+                {
+                    var response = await http.DeleteAsync($"usuario?id={usuario.Id}");
+                    if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
+                    {
+                        throw new Exception(response.Content.ReadAsStringAsync().Result);
+                    }
+
+                    await RefreshPageAsync();
+                    notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = "Sucesso", Detail = "Registro excluído com sucesso.", Duration = 5000 });
+                }
+                catch (Exception exc)
+                {
+                    Console.WriteLine(exc.Message);
+                    notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = "Erro", Detail = "Um erro aconteceu ao excluir o registro.", Duration = 5000 });
+                }
+                SetVisibleLoader(false);
+            }
+        }    
+    }
 
     class Usuario
     {
+        public long Id {get; set;}
+
         public string Nome {get; set;}
 
         public string Cpf {get; set;}
+
+        public string Email {get; set;}
+
+        public bool Administrador {get; set;}
+
+        public bool Ativo {get; set;}
+
+        public string _Administrador 
+        {
+            get { return Administrador ? "Sim" : "Não"; } 
+        }
+
+        public string _Ativo 
+        {
+            get { return Ativo ? "Sim" : "Não"; } 
+        } 
     }
 }
