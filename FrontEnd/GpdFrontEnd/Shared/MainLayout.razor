@@ -39,6 +39,14 @@
         {
             conteudo = "Cadastro de nível organizacional";
         }
+        else if (uri.StartsWith("projeto-consulta"))
+        {
+            conteudo = "Consulta de projeto";
+        }
+        else if (uri.StartsWith("projeto-cadastro"))
+        {
+            conteudo = "Cadastro de projeto";
+        }
 
         if (conteudo != null)
         {

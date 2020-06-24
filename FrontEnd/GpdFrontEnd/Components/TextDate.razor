@@ -1,0 +1,307 @@
+<div class="form-group">
+    <label>@Label</label>
+    <div class="input-group">
+        <input type="text" class="form-control" maxlength="10"
+               style="border: 1px solid @(Valid ? "#ced4da" : "#F7819F"); background-color: @(Valid ? "white" : "#F6CED8")"
+                @bind-value="textValue" placeholder="@Placeholder" 
+               @bind-value:event="oninput" onpaste="return false" @onkeydown="KeyDown" @onkeydown:preventDefault="blockDigit" @onkeydown:stopPropagation="blockDigit"
+               @onkeyup="KeyUp" readonly="@Readonly" disabled="@Disabled"/>
+        <div class="input-group-prepend" style="background-color: #007bff">
+            <div class="dropdown">
+                <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" @onclick="OnShow" @onblur="OnBlur" style="color:white">
+                    <span class="oi oi-calendar"></span>
+                    <span class="caret"></span>
+                </button>
+                <div class="dropdown-menu @show" style="min-width:300px; margin-left:-238px" @onmouseout="@(() => focus = false)" @onmousemove="@(() => focus = true)">
+                    <div class="row" style="margin-left:5px">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Ano</label>
+                                <select class="form-control" @onblur="OnBlur" @bind="ano" @onclick="OnSelectAno">
+                                    @for (int ano = 2000; ano < (DateTime.Now.Year + 20); ano++)
+                                    {
+                                        <option value="@ano">@ano</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6" style="margin-left:-20px">
+                            <div class="form-group">
+                                <label>Mês</label>
+                                <select class="form-control" @onblur="OnBlur" @bind="mes" @onclick="OnSelectMes">
+                                    <option value="1">Janeiro</option>
+                                    <option value="2">Fevereiro</option>
+                                    <option value="3">Março</option>
+                                    <option value="4">Abril</option>
+                                    <option value="5">Maio</option>
+                                    <option value="6">Junho</option>
+                                    <option value="7">Julho</option>
+                                    <option value="8">Agosto</option>
+                                    <option value="9">Setembro</option>
+                                    <option value="10">Outubro</option>
+                                    <option value="11">Novembro</option>
+                                    <option value="12">Dezembro</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-left:5px">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Dia</label>
+                                <select class="form-control" @onblur="OnBlur" @bind="dia" @onclick="ObterDiaSemana">
+                                    @for (int dia = 1; dia <= ultimoDiaMes; dia++)
+                                    {
+                                        <option value="@dia">@dia</option>
+                                    }
+                                </select>
+                                <small class="form-text text-muted">@diaSemana</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <button class="btn btn-primary" style="margin-top:24px; margin-left:-20px;width:123px" @onclick="Select">Selecionar</button>
+                        </div>
+                        <div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <small class="form-text text-muted" style="color:red !important" hidden="@Valid">@message</small>
+</div>
+
+    @code {
+
+        private bool focus;
+        private string show = string.Empty;
+        private int ano;
+        private byte mes;
+        private byte dia;
+        private byte ultimoDiaMes;
+        private string diaSemana;
+        private string message;
+        private string oldValue;
+        private string textValue = string.Empty;
+        private bool blockDigit;
+        public bool Valid { get; private set; }
+
+        [Parameter]
+        public bool Required { get; set; }
+
+        [Parameter]
+        public string Label { get; set; }
+
+        [Parameter]
+        public string Placeholder { get; set; }
+
+        [Parameter]
+        public bool Disabled { get; set; }
+
+        [Parameter]
+        public bool Readonly { get; set; }
+
+        [Parameter]
+        public DateTime MaxValue { get; set; } = DateTime.MaxValue;
+
+        [Parameter]
+        public DateTime MinValue { get; set; } = DateTime.MinValue;
+
+        [Parameter]
+        public DateTime? Value
+        {
+            set
+            {
+                if (value.HasValue && oldValue != OldValue(value))
+                {
+                    textValue = value.Value.ToString("dd/MM/yyyy");
+                    if (value.Value.Year == 1)
+                    {
+                        textValue = string.Empty;
+                    }
+                }
+
+                oldValue = textValue;
+                ValidState();
+            }
+        }
+
+        private void KeyUp() => ValidState();
+
+        private void KeyDown(KeyboardEventArgs keyboardEventArgs)
+        {
+            if (keyboardEventArgs.Key.ToUpper() == "BACKSPACE")
+            {
+                blockDigit = false;
+                return;
+            }
+
+            char digit = keyboardEventArgs.Key[0];
+            blockDigit = !(char.IsDigit(digit) || digit == '/');
+            if (!blockDigit)
+            {
+                blockDigit = true;
+                if (textValue.Length == 1 || textValue.Length == 4)
+                {
+                    textValue = textValue + digit + '/';
+                }
+                else
+                {
+                    textValue += digit;
+                }
+                ValidState();
+            }
+        }
+
+        private void ValidState()
+        {
+            Valid = true;
+
+            if (Required && string.IsNullOrWhiteSpace(textValue))
+            {
+                Valid = false;
+                message = "Este campo deve ser informado obrigatóriamente.";
+                StateHasChanged();
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(textValue))
+            {
+                try
+                {
+                    int ano = 0;
+
+                    try
+                    {
+                        string anoStr = textValue.Split('/')[2];
+                        ano = int.Parse(anoStr);
+
+                        if (ano < 1000)
+                        {
+                            throw new Exception();
+                        }
+                    }
+                    catch
+                    {
+                        throw new FormatException();
+                    }
+
+                    if (ano < 1950 || ano > DateTime.MaxValue.Year)
+                    {
+                        throw new Exception();
+                    }
+
+                    DateTime value = Convert.ToDateTime(textValue, System.Globalization.CultureInfo.GetCultureInfo("pt-BR"));
+
+                    if (value > MaxValue || value < MinValue)
+                    {
+                        Valid = false;
+                        message = "Data é superior ao máximo permitido ou inferior ao mínimo permitido.";
+                    }
+                }
+                catch (FormatException)
+                {
+                    Valid = false;
+                    message = "O conteúdo deste campo não representa uma data válida.";
+                }
+                catch
+                {
+                    Valid = false;
+                    message = "Data é superior ao máximo permitido ou inferior ao mínimo permitido.";
+                }
+
+                StateHasChanged();
+                return;
+            }
+
+            StateHasChanged();
+        }
+
+        private string OldValue(DateTime? value)
+        {
+            if (value.HasValue)
+            {
+                return value.Value.ToString("dd/MM/yyyy");
+            }
+
+            return string.Empty;
+        }
+
+        private void Select()
+        {
+            show = string.Empty;
+            textValue = new DateTime(ano, mes, dia).ToString("dd/MM/yyyy");
+            ValidState();
+        }
+
+        private void OnShow()
+        {
+            if (show == string.Empty)
+            {
+                show = "show";
+
+            }
+            else
+            {
+                show = string.Empty;
+            }
+        }
+
+        private void OnBlur()
+        {
+            if (!focus)
+            {
+                show = string.Empty;
+            }
+        }
+
+        private void OnSelectAno() => ObterUltimoDiaMes();
+
+        private void OnSelectMes() => ObterUltimoDiaMes();
+
+        private void ObterUltimoDiaMes()
+        {
+            if (mes > 0 && ano > 0)
+            {
+                switch (mes)
+                {
+                    case 1:
+                    case 3:
+                    case 5:
+                    case 7:
+                    case 8:
+                    case 10:
+                    case 12: ultimoDiaMes = 31; break;
+                    case 4:
+                    case 6:
+                    case 9:
+                    case 11: ultimoDiaMes = 30; break;
+                    default: if (DateTime.IsLeapYear(ano)) ultimoDiaMes = 29; else ultimoDiaMes = 28; break;
+                }
+
+                dia = 1;
+                ObterDiaSemana();
+            }
+        }
+
+        private void ObterDiaSemana()
+        {
+            var dateTime = new DateTime(ano, mes, dia);
+            switch (dateTime.DayOfWeek)
+            {
+                case DayOfWeek.Sunday: diaSemana = "Domingo"; break;
+                case DayOfWeek.Saturday: diaSemana = "Sábado"; break;
+                case DayOfWeek.Friday: diaSemana = "Sexta-feira"; break;
+                case DayOfWeek.Thursday: diaSemana = "Quinta-feira"; break;
+                case DayOfWeek.Wednesday: diaSemana = "Quarta-feira"; break;
+                case DayOfWeek.Tuesday: diaSemana = "Terça-feira"; break;
+                default: diaSemana = "Segunda-feira"; break;
+            }
+
+            StateHasChanged();
+        }
+
+        public DateTime GetValue() => DateTime.Parse(textValue);
+
+        public DateTime? GetValueOrNull() => string.IsNullOrWhiteSpace(textValue) ? null : (DateTime?) GetValue();
+    }
