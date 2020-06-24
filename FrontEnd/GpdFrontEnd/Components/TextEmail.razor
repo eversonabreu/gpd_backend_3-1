@@ -1,18 +1,10 @@
 <div class="form-group">
     <label>@Label</label>
     <div class="input-group">
-        @if (!Multiple)
-        {
-            <input type="text" class="form-control" @bind-value="textValue" maxlength="@MaxLength"
-                @bind-value:event="oninput" style="border: 1px solid @(Valid ? "#ced4da" : "#F7819F"); background-color: @(Valid ? "white" : "#F6CED8")"
-                @onblur="Leave" @onkeyup="KeyUp" readonly="@ReadOnly" disabled="@Disabled" placeholder="@PlaceHolder" />
-        }
-        else
-        {
-           <textarea class="form-control" @bind-value="textValue" maxlength="@MaxLength"
-                @bind-value:event="oninput" style="border: 1px solid @(Valid ? "#ced4da" : "#F7819F"); background-color: @(Valid ? "white" : "#F6CED8")"
-                @onblur="Leave" @onkeyup="KeyUp" readonly="@ReadOnly" disabled="@Disabled" placeholder="@PlaceHolder" />
-        }
+        <input type="text" class="form-control" @bind-value="textValue" maxlength="@MaxLength"
+               @bind-value:event="oninput" style="border: 1px solid @(Valid ? "#ced4da" : "#F7819F"); background-color: @(Valid ? "white" : "#F6CED8")"
+               @onblur="Leave" @onkeyup="KeyUp" readonly="@ReadOnly" disabled="@Disabled" placeholder="@PlaceHolder" />
+
     </div>
     <small class="form-text text-muted" style="color:red !important" hidden="@Valid">@message</small>
 </div>
@@ -66,14 +58,11 @@
         [Parameter]
         public string Label { get; set; }
 
-        [Parameter]
-        public bool Multiple { get; set; }
-
         private string message;
 
-        public string GetValue() => textValue;
+        public string GetValue() => textValue.Trim();
 
-        public string GetValueOrNull() => (textValue ?? string.Empty).Trim() == string.Empty ? null : textValue;
+        public string GetValueOrNull() => textValue != null ? GetValue() : null;
 
         private void Leave() => ValidState();
 
@@ -95,9 +84,23 @@
             {
                 Valid = false;
                 message = "Este campo deve ser informado obrigatóriamente.";
+                StateHasChanged();
+                return;
             }
 
-            StateHasChanged();
+            if (!string.IsNullOrWhiteSpace(textValue) && !IsEmail(textValue.Trim()))
+            {
+                Valid = false;
+                message = "O e-mail não é válido.";
+                StateHasChanged();
+                return;
+            }
+        }
+
+        private bool IsEmail(string strEmail)
+        {
+            string strModelo = "^([0-9a-zA-Z]([-.\\w]*[0-9a-zA-Z])*@([0-9a-zA-Z][-\\w]*[0-9a-zA-Z]\\.)+[a-zA-Z]{2,9})$";
+            return System.Text.RegularExpressions.Regex.IsMatch(strEmail, strModelo);
         }
 
         protected override void OnAfterRender(bool firstRender)

@@ -1,0 +1,102 @@
+<div class="form-group">
+    <label>@Label</label>
+        <div class="input-group">
+            <select class="form-control" @onchange="@(obj => { textValue = obj.Value.ToString(); ValidState(); })"
+                readonly="@ReadOnly" disabled="@Disabled" style="border: 1px solid @(Valid ? "#ced4da" : "#F7819F"); background-color: @(Valid ? "white" : "#F6CED8")">
+                @if (AllowInvalidOption)
+                {
+                    <option value="0">@TextInvalidOption</option>
+                }
+                @if (Options != null)
+                {
+                    foreach (var item in Options)
+                    {
+                        <option value="@item.Key" selected="@(item.Key.ToString() == textValue)">@item.Value</option>
+                    }
+                }
+            </select>
+    </div>
+    <small class="form-text text-muted" style="color:red !important" hidden="@Valid">@message</small>
+</div>
+
+@code
+{
+    [Parameter]
+    public bool AllowInvalidOption { get; set; }
+
+    [Parameter]
+    public string TextInvalidOption { get; set; } = "Selecione uma opção";
+
+    [Parameter]
+    public Dictionary<long, string> Options { get; set; }
+
+    private string oldValue;
+    private string textValue;
+
+    [Parameter]
+    public long? Value 
+    {
+        set
+        {
+            if (value.HasValue && oldValue != OldValue(value))
+            {
+                textValue = value.Value.ToString();
+                oldValue = textValue;
+                ValidState();
+            }
+        }
+    }
+
+    private string OldValue(long? value)
+    {
+        if (value.HasValue)
+        {
+            return value.Value.ToString();
+        }
+
+        return string.Empty;
+    }
+
+    public bool Valid { get; private set; }
+
+    [Parameter]
+    public bool ReadOnly { get; set; }
+
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    [Parameter]
+    public bool Required { get; set; }
+
+    [Parameter]
+    public string Label { get; set; }
+
+    private string message;
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            ValidState();
+        }
+
+        base.OnAfterRender(firstRender);
+    }
+
+    private void ValidState()
+    {
+        Valid = true;
+
+        if (Required && (string.IsNullOrEmpty(textValue) || textValue == "0"))
+        {
+            Valid = false;
+            message = "Este campo deve ser informado obrigatóriamente.";
+            StateHasChanged();
+            return;
+        }
+    }
+
+    public long GetValue() => long.Parse(textValue);
+
+    public long? GetValueOrNull() => string.IsNullOrEmpty(textValue) ? null : (long?) long.Parse(textValue);
+}

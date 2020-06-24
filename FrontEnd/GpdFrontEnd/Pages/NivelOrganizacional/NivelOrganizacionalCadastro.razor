@@ -1,0 +1,189 @@
+@page "/nivel-organizacional-cadastro"
+@page "/nivel-organizacional-cadastro/{Id:long}"
+@inject GpdFrontEnd.Services.System.HttpService httpService
+@inject NotificationService notificationService
+@inject NavigationManager navigation
+@inject IJSRuntime js
+@using System.Text.Json;
+
+<nav class="navbar navbar-default navbar-fixed-top" style="height:56px; background-image: linear-gradient(180deg, #b0d2f7 100%, #007bff 0%); justify-content:center">
+    <button @onclick="SalvarAsync" class="btn btn-success" style="width:120px; border-radius:0px"><span class="oi oi-circle-check"></span> Salvar</button>
+    &nbsp;&nbsp;
+    <button class="btn btn-default" @onclick="Cancelar" style="width:120px; border-radius:0px; border: 1px solid black; background-color:white"><span class="oi oi-circle-x"></span> Cancelar</button>
+    &nbsp;&nbsp;
+    <button hidden="@(!Id.HasValue)" class="btn btn-danger" @onclick="ExcluirAsync"><span class="oi oi-trash"></span> Excluir</button>
+</nav>
+
+<div class="card">
+    <div class="card-header"><h5>Formulário de cadastro de nível organizacional (modo: @(Id.HasValue ? "visualização/edição" : "inserção"))</h5></div>
+    <div class="card-body">
+
+        <div class="row">
+            <div class="col-md-8">
+                <Text @ref="TxNome" Label="Nome" PlaceHolder="insira o nome" MaxLength="150" Required="true" Value="@nivelOrganizacionalCadastro.Nome"/>
+            </div>
+            <div class="col-md-4">
+                <SelectOption  @ref="SelTipo" Label="Tipo" Required="true" Value="@nivelOrganizacionalCadastro.Tipo" AllowInvalidOption="true" Options="OptionsTipo"/>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <Text @ref="TxDescricao" Multiple="true" Label="Descricao" PlaceHolder="insira a descrição" MaxLength="500" Required="false" Value="@nivelOrganizacionalCadastro.Descricao"/>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<Loader Visible="loaderVisible"/>
+
+@code
+{
+    [Parameter]
+    public long? Id { get; set; }
+
+    private NivelOrganizacional nivelOrganizacionalCadastro;
+    private Dictionary<long, string> OptionsTipo;
+    private bool loaderVisible;
+
+    protected override void OnInitialized()
+    {
+        nivelOrganizacionalCadastro = new NivelOrganizacional();
+        OptionsTipo = new Dictionary<long, string>();
+        OptionsTipo.Add(1, "Cargo");
+        OptionsTipo.Add(2, "Departamento");
+        OptionsTipo.Add(3, "Grupo");
+        base.OnInitialized();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender) 
+    {
+        if (firstRender)
+        {
+            if (Id.HasValue)
+            {
+                var http = await httpService.GetHttpAsync();
+                if (http != null)
+                {
+                    SetVisibleLoader(true);
+                    try
+                    {
+                        var response = await http.GetAsync($"nivel-organizacional/id/{Id}");
+                        var content = await response.Content.ReadAsStringAsync();
+                        nivelOrganizacionalCadastro = JsonSerializer.Deserialize<NivelOrganizacional>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    }
+                    catch (Exception exc)
+                    {
+                        Console.WriteLine(exc.Message);
+                        notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = "Erro", Detail = "Um erro aconteceu ao carregar o registro.", Duration = 7000 });
+                    }
+                    SetVisibleLoader(false);
+                }
+            }
+        }
+    }
+
+    private async Task ExcluirAsync()
+    {
+        var result = await js.InvokeAsync<bool>("confirm", "Tem certeza que deseja excluir este registro.");
+        if (result == true)
+        {
+            var http = await httpService.GetHttpAsync();
+            if (http != null)
+            {
+                SetVisibleLoader(true);
+                try
+                {
+                    var response = await http.DeleteAsync($"nivel-organizacional?id={Id}");
+                    if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
+                    {
+                        throw new Exception(response.Content.ReadAsStringAsync().Result);
+                    }
+
+                    Cancelar();
+                    notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = "Sucesso", Detail = "Registro excluído com sucesso.", Duration = 5000 });
+                }
+                catch (Exception exc)
+                {
+                    Console.WriteLine(exc.Message);
+                    notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = "Erro", Detail = "Um erro aconteceu ao excluir o registro.\nVerifique se este registro possui dependências.", Duration = 7000 });
+                }
+                SetVisibleLoader(false);
+            }
+        } 
+    }
+
+    private void Cancelar()
+    {
+        navigation.NavigateTo("/nivel-organizacional-consulta");
+    }
+
+    private async Task SalvarAsync()
+    {
+        bool formularioValido = TxNome.Valid && SelTipo.Valid;
+        if (formularioValido)
+        {
+            var http = await httpService.GetHttpAsync();
+            if (http != null)
+            {
+                SetVisibleLoader(true);
+                try
+                {
+                    HttpResponseMessage response; 
+                    nivelOrganizacionalCadastro.Id = Id;
+                    nivelOrganizacionalCadastro.Nome = TxNome.GetValue();
+                    nivelOrganizacionalCadastro.Tipo = (int) SelTipo.GetValue();
+                    nivelOrganizacionalCadastro.Descricao = TxDescricao.GetValueOrNull();
+                    string message;
+                    if (nivelOrganizacionalCadastro.Id.HasValue)
+                    {
+                        response = await http.PutAsJsonAsync("nivel-organizacional", nivelOrganizacionalCadastro);
+                        message = "Registro atualizado com sucesso";
+                    }
+                    else
+                    {
+                        response = await http.PostAsJsonAsync("nivel-organizacional", nivelOrganizacionalCadastro);
+                        message = "Registro inserido com sucesso.";
+                        Id = long.Parse(response.Content.ReadAsStringAsync().Result);
+                    }
+
+                    if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
+                    {
+                        throw new Exception(response.Content.ReadAsStringAsync().Result);
+                    }
+
+                    notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = "Sucesso", Detail = message, Duration = 6000 });
+                }
+                catch (Exception exc)
+                {
+                    Console.WriteLine(exc.Message);
+                    notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = "Erro", Detail = "Um erro aconteceu ao salvar os dados.", Duration = 5000 });
+                }
+                SetVisibleLoader(false);
+            }
+        }
+        else
+        {
+            notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Warning, Summary = "Alerta", Detail = "Existem campos que precisam ser informados ou corrigidos", Duration = 5000 });
+        }
+    }
+
+    private void SetVisibleLoader(bool visible)
+    {
+        loaderVisible = visible;
+        StateHasChanged();
+    }
+
+    private Text TxNome;
+    private SelectOption SelTipo;
+    private Text TxDescricao;
+
+    public class NivelOrganizacional
+    {
+        public long? Id {get; set;}
+        public string Nome {get; set;}
+        public int Tipo {get; set;}
+        public string Descricao {get; set;}
+    }
+}

@@ -1,11 +1,11 @@
-@page "/usuario-consulta"
+@page "/unidade-medida-consulta"
 @inject GpdFrontEnd.Services.System.HttpService httpService
 @inject NotificationService notificationService
 @inject IJSRuntime js
 @inject NavigationManager navigation
 
 <nav class="navbar navbar-default navbar-fixed-top" style="height:56px; background-image: linear-gradient(180deg, #b0d2f7 100%, #007bff 0%); justify-content:center">
-    <button class="btn btn-primary" style="background-color: #007bff !important" @onclick="AdicionarUsuario"><span class="oi oi-plus"></span> Adicionar usuário</button>
+    <button class="btn btn-primary" style="background-color: #007bff !important" @onclick="AdicionarUnidadeMedida"><span class="oi oi-plus"></span> Adicionar unidade de medida</button>
 </nav>           
 
 <div class="row" style="margin-top:10px"> 
@@ -21,7 +21,7 @@
 
 <div class="row" style="margin-top:20px"> 
     <div class="col-md-10 mx-auto">
-        <DataTable @ref="dataTable" TItem="Usuario" Data="data" Count="count" Columns="columns" OnPaginate="OnPaginateAsync" OnEdit="OnEditUsuario" OnDelete="OnDeleteUsuarioAsync"/>
+        <DataTable @ref="dataTable" TItem="UnidadeMedida" Data="data" Count="count" Columns="columns" OnPaginate="OnPaginateAsync" OnEdit="OnEditUnidadeMedida" OnDelete="OnDeleteUnidadeMedidaAsync"/>
     </div>
 </div>
 
@@ -29,15 +29,15 @@
 
 @code 
 {
-    private DataTable<Usuario> dataTable;
-    private IList<Usuario> data;
-    private IList<DataTable<Usuario>.Column> columns;
+    private DataTable<UnidadeMedida> dataTable;
+    private IList<UnidadeMedida> data;
+    private IList<DataTable<UnidadeMedida>.Column> columns;
     private int count;
     private string filter;
     private int page = 0;
     private bool loaderVisible;
 
-    private void AdicionarUsuario() => navigation.NavigateTo("/usuario-cadastro");
+    private void AdicionarUnidadeMedida() => navigation.NavigateTo("/unidade-medida-cadastro");
 
     private async Task OnPaginateAsync(int page)
     {
@@ -49,7 +49,7 @@
     {
         if ((filter?.Trim().Length ?? 0) < 3)
         {
-            navigation.NavigateTo("/usuario-consulta", true);
+            navigation.NavigateTo("/unidade-medida-consulta", true);
         }
         else
         {
@@ -60,33 +60,18 @@
     protected override void OnInitialized()
     {
         base.OnInitialized();
-        columns = new List<DataTable<Usuario>.Column>();
-        columns.Add(new DataTable<Usuario>.Column
+        columns = new List<DataTable<UnidadeMedida>.Column>();
+        columns.Add(new DataTable<UnidadeMedida>.Column
         {
-            PropertyName = "Nome",
-            DisplayName = "Nome"
+            PropertyName = "Sigla",
+            DisplayName = "Sigla"
         });
-        columns.Add(new DataTable<Usuario>.Column
+        columns.Add(new DataTable<UnidadeMedida>.Column
         {
-            PropertyName = "Cpf",
-            DisplayName = "Cpf"
+            PropertyName = "Descricao",
+            DisplayName = "Descrição"
         });
-        columns.Add(new DataTable<Usuario>.Column
-        {
-            PropertyName = "Email",
-            DisplayName = "E-mail"
-        });
-        columns.Add(new DataTable<Usuario>.Column
-        {
-            PropertyName = "_Administrador",
-            DisplayName = "Administrador"
-        });
-        columns.Add(new DataTable<Usuario>.Column
-        {
-            PropertyName = "_Ativo",
-            DisplayName = "Ativo"
-        });
-        data = new List<Usuario>();
+        data = new List<UnidadeMedida>();
     }
 
     private async Task KeyDownPesquisarAsync(KeyboardEventArgs key)
@@ -105,7 +90,7 @@
             return;
         }
 
-        await BuscarUsuarioAsync();
+        await BuscarUnidadeMedidaAsync();
     }
 
     private string GetFilter()
@@ -117,11 +102,11 @@
             return "false";
         }
 
-        string expression  = $"Nome.Trim().ToUpper().Contains(\"{filterAux}\") || Email.Trim().ToUpper().Contains(\"{filterAux}\") || Cpf.Trim().Contains(\"{filterAux}\")";
+        string expression  = $"Sigla.Trim().ToUpper().Contains(\"{filterAux}\") || Descricao.Trim().ToUpper().Contains(\"{filterAux}\")";
         return System.Web.HttpUtility.UrlEncode(expression);
     }
 
-    private async Task BuscarUsuarioAsync()
+    private async Task BuscarUnidadeMedidaAsync()
     {
         var http = await httpService.GetHttpAsync();
         if (http != null)
@@ -130,14 +115,14 @@
             try
             {
                 string expression = GetFilter();
-                var response = await http.GetAsync($"usuario?filter={expression}&page={page}&limit={dataTable.CountItemsInPage}");
+                var response = await http.GetAsync($"unidade-medida?filter={expression}&page={page}&limit={dataTable.CountItemsInPage}");
                 if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
                 {
                     throw new Exception(response.Content.ReadAsStringAsync().Result);
                 }
 
                 this.page = 0;
-                var result = await httpService.GetResultSetAsync<Usuario>(response);
+                var result = await httpService.GetResultSetAsync<UnidadeMedida>(response);
                 data = result.Data;
                 count = result.Count; 
             }
@@ -158,14 +143,14 @@
         StateHasChanged();
     }
 
-    private void OnEditUsuario(Usuario usuario)
+    private void OnEditUnidadeMedida(UnidadeMedida unidadeMedida)
     {
-        navigation.NavigateTo($"/usuario-cadastro/{usuario.Id}");
+        navigation.NavigateTo($"/unidade-medida-cadastro/{unidadeMedida.Id}");
     }
 
-    private async Task OnDeleteUsuarioAsync(Usuario usuario)
+    private async Task OnDeleteUnidadeMedidaAsync(UnidadeMedida unidadeMedida)
     {
-        var result = await js.InvokeAsync<bool>("confirm", "Tem certeza que deseja excluir este usuário.");
+        var result = await js.InvokeAsync<bool>("confirm", "Tem certeza que deseja excluir este registro.");
         if (result == true)
         {
             var http = await httpService.GetHttpAsync();
@@ -174,7 +159,7 @@
                 SetVisibleLoader(true);
                 try
                 {
-                    var response = await http.DeleteAsync($"usuario?id={usuario.Id}");
+                    var response = await http.DeleteAsync($"unidade-medida?id={unidadeMedida.Id}");
                     if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
                     {
                         throw new Exception(response.Content.ReadAsStringAsync().Result);
@@ -193,28 +178,12 @@
         }    
     }
 
-    class Usuario
+    class UnidadeMedida
     {
         public long Id {get; set;}
 
-        public string Nome {get; set;}
+        public string Descricao {get; set;}
 
-        public string Cpf {get; set;}
-
-        public string Email {get; set;}
-
-        public bool Administrador {get; set;}
-
-        public bool Ativo {get; set;}
-
-        public string _Administrador 
-        {
-            get { return Administrador ? "Sim" : "Não"; } 
-        }
-
-        public string _Ativo 
-        {
-            get { return Ativo ? "Sim" : "Não"; } 
-        } 
+        public string Sigla {get; set;}
     }
 }

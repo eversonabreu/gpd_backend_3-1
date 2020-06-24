@@ -23,6 +23,22 @@
         {
             conteudo = "Cadastro de usuário";
         }
+        else if (uri.StartsWith("unidade-medida-consulta"))
+        {
+            conteudo = "Consulta de unidade de medida";
+        }
+        else if (uri.StartsWith("unidade-medida-cadastro"))
+        {
+            conteudo = "Cadastro de unidade de medida";
+        }
+        else if (uri.StartsWith("nivel-organizacional-consulta"))
+        {
+            conteudo = "Consulta de nível organizacional";
+        }
+        else if (uri.StartsWith("nivel-organizacional-cadastro"))
+        {
+            conteudo = "Cadastro de nível organizacional";
+        }
 
         if (conteudo != null)
         {

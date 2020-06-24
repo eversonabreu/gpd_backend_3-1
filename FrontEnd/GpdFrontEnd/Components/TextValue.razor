@@ -1,0 +1,415 @@
+<div class="form-group">
+    <label>@Label</label>
+    <div class="input-group">
+        <div class="input-group-prepend" hidden="@string.IsNullOrWhiteSpace(Symbol)">
+            <div class="input-group-text">@Symbol</div>
+        </div>
+        <input type="text" class="form-control" @onkeypress="KeyPress" @onkeypress:preventDefault="blockDigit" @onkeypress:stopPropagation="blockDigit" @bind-value="textValue"
+               @bind-value:event="oninput" @onkeyup="KeyUp" onpaste="return false;" style="border: 1px solid @(Valid ? "#ced4da" : "#F7819F"); background-color: @(Valid ? "white" : "#F6CED8")"
+               @onblur="Leave" readonly="@ReadOnly" disabled="@Disabled" placeholder="@PlaceHolder" />
+
+        @if (AllowClearValue)
+        {
+            <div class="input-group-prepend">
+                <div class="input-group-text" style="padding-left: 0px; padding-right: 2px; padding-bottom: 0px;">
+                    <button class="btn btn-secondary" style="cursor: pointer; margin-top: -7px; width: 35px; height: 37px; border-radius: 0px; margin-right: -2px;" disabled="@(string.IsNullOrEmpty(textValue) || Disabled || ReadOnly)" @onclick="@(() => { textValue = string.Empty; ValidState(); })">
+                        X
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+    <small class="form-text text-muted" style="color:red !important" hidden="@Valid">@message</small>
+</div>
+
+    @code {
+
+        private string oldValue;
+        private string textValue = string.Empty;
+        private bool blockDigit;
+
+        [Parameter]
+        public decimal? Value
+        {
+            set
+            {
+                if (value.HasValue && oldValue != OldValue(value))
+                {
+                    textValue = value.Value.ToString(System.Globalization.CultureInfo.GetCultureInfo("pt-BR"));
+
+                    if (textValue.Contains("-") && !AllowNegative)
+                    {
+                        textValue = string.Empty;
+                        oldValue = textValue;
+                        ValidState();
+                        return;
+                    }
+
+                    int index = textValue.IndexOf(',');
+                    if (index == -1)
+                    {
+                        textValue += ",";
+                        for (int aux = 1; aux <= CountDecimals; aux++)
+                        {
+                            textValue += "0";
+                        }
+                    }
+                    else
+                    {
+                        int indexCh = 0;
+                        int count = 0;
+                        string valueAux = string.Empty;
+                        foreach (char ch in textValue)
+                        {
+                            valueAux += ch;
+                            if (indexCh > index)
+                            {
+                                count++;
+                            }
+
+                            indexCh++;
+
+                            if (count == CountDecimals)
+                            {
+                                break;
+                            }
+                        }
+
+                        while (count < CountDecimals)
+                        {
+                            valueAux += "0";
+                            count++;
+                        }
+
+                        textValue = valueAux;
+                    }
+
+                    oldValue = textValue;
+                    ValidState();
+                }
+            }
+        }
+
+        private string OldValue(decimal? value)
+        {
+            if (value.HasValue)
+            {
+                return value.Value.ToString(System.Globalization.CultureInfo.GetCultureInfo("pt-BR"));
+            }
+
+            return string.Empty;
+        }
+
+        [Parameter]
+        public bool AllowNegative { get; set; }
+
+        [Parameter]
+        public string Symbol { get; set; }
+
+        [Parameter]
+        public bool AllowClearValue { get; set; } = true;
+
+        [Parameter]
+        public bool Required { get; set; }
+
+        public bool Valid { get; private set; }
+
+        [Parameter]
+        public decimal MaxValue { get; set; } = Decimal.MaxValue;
+
+        [Parameter]
+        public decimal MinValue { get; set; } = Decimal.MinValue;
+
+        [Parameter]
+        public bool ReadOnly { get; set; }
+
+        [Parameter]
+        public bool Disabled { get; set; }
+
+        [Parameter]
+        public string PlaceHolder { get; set; }
+
+        [Parameter]
+        public string Label { get; set; }
+
+        private string message;
+
+        [Parameter]
+        public byte CountDecimals { get; set; } = 2;
+
+        public decimal GetValue()
+        {
+            try
+            {
+                return Convert.ToDecimal(textValue);
+            }
+            catch
+            {
+                return 0m;
+            }
+        }
+
+        public decimal? GetValueOrNull()
+        {
+            try
+            {
+                return Convert.ToDecimal(textValue);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private void KeyPress(KeyboardEventArgs keyboardEventArgs)
+        {
+            blockDigit = false;
+            char digit = keyboardEventArgs.Key[0];
+
+            if (!Char.IsDigit(digit))
+            {
+                if (digit == ',')
+                {
+                    blockDigit = (textValue.Contains(","));
+                }
+                else if (digit == '-' && AllowNegative && textValue != string.Empty)
+                {
+                    blockDigit = true;
+
+                    if (!textValue.Contains("-"))
+                    {
+                        textValue = string.Format("{0}", Convert.ToDecimal(textValue, System.Globalization.CultureInfo.GetCultureInfo("pt-BR")) * -1);
+                    }
+                }
+                else if (digit == '+')
+                {
+                    blockDigit = true;
+                    textValue = textValue.Replace("-", string.Empty);
+                }
+                else
+                {
+                    blockDigit = true;
+                }
+            }
+        }
+
+        private void KeyUp()
+        {
+            if (Disabled || ReadOnly)
+            {
+                return;
+            }
+
+            switch (CountDecimals)
+            {
+                case 1: KeyUp1(); break;
+                case 2: KeyUp2(); break;
+                case 3: KeyUp3(); break;
+                case 4: KeyUp4(); break;
+                default: throw new Exception("Property 'CountDecimals' is not valid.");
+            }
+
+            Leave();
+            ValidState();
+        }
+
+        private void KeyUp1()
+        {
+            textValue = textValue.Replace(",", string.Empty).Replace("0,", string.Empty);
+            if (textValue.Length == 0)
+            {
+                textValue = "0,0" + textValue;
+            }
+            if (textValue.Length == 1)
+            {
+                textValue = "0," + textValue;
+            }
+            else if (textValue.Length >= 2)
+            {
+                if (textValue.StartsWith("0,"))
+                {
+                    textValue = textValue.Insert(textValue.Length - 1, ",").Replace("0,", string.Empty);
+                }
+                else
+                {
+                    textValue = textValue.Insert(textValue.Length - 1, ",");
+                }
+            }
+        }
+
+        private void KeyUp2()
+        {
+            textValue = textValue.Replace(",", string.Empty).Replace("00,", string.Empty);
+            if (textValue.Length == 0)
+            {
+                textValue = "0,00" + textValue;
+            }
+            if (textValue.Length == 1)
+            {
+                textValue = "0,0" + textValue;
+            }
+            if (textValue.Length == 2)
+            {
+                textValue = "0," + textValue;
+            }
+            else if (textValue.Length >= 3)
+            {
+                if (textValue.StartsWith("0,"))
+                {
+                    textValue = textValue.Insert(textValue.Length - 2, ",").Replace("0,", string.Empty);
+                }
+                else if (textValue.Contains("00,"))
+                {
+                    textValue = textValue.Insert(textValue.Length - 2, ",").Replace("00,", string.Empty);
+                }
+                else
+                {
+                    textValue = textValue.Insert(textValue.Length - 2, ",");
+                }
+            }
+        }
+
+        private void KeyUp3()
+        {
+            textValue = textValue.Replace(",", string.Empty).Replace("000,", string.Empty);
+            if (textValue.Length == 0)
+            {
+                textValue = "0,000" + textValue;
+            }
+            if (textValue.Length == 1)
+            {
+                textValue = "0,00" + textValue;
+            }
+            if (textValue.Length == 2)
+            {
+                textValue = "0,0" + textValue;
+            }
+            if (textValue.Length == 3)
+            {
+                textValue = "0," + textValue;
+            }
+            else if (textValue.Length >= 4)
+            {
+                if (textValue.StartsWith("0,"))
+                {
+                    textValue = textValue.Insert(textValue.Length - 3, ",").Replace("0,", string.Empty);
+                }
+                else if (textValue.Contains("00,"))
+                {
+                    textValue = textValue.Insert(textValue.Length - 3, ",").Replace("00,", string.Empty);
+                }
+                else if (textValue.Contains("000,"))
+                {
+                    textValue = textValue.Insert(textValue.Length - 3, ",").Replace("000,", string.Empty);
+                }
+                else
+                {
+                    textValue = textValue.Insert(textValue.Length - 3, ",");
+                }
+            }
+        }
+
+        private void KeyUp4()
+        {
+            textValue = textValue.Replace(",", string.Empty).Replace("0000,", string.Empty);
+            if (textValue.Length == 0)
+            {
+                textValue = "0,0000" + textValue;
+            }
+            if (textValue.Length == 1)
+            {
+                textValue = "0,000" + textValue;
+            }
+            if (textValue.Length == 2)
+            {
+                textValue = "0,00" + textValue;
+            }
+            if (textValue.Length == 3)
+            {
+                textValue = "0,0" + textValue;
+            }
+            if (textValue.Length == 4)
+            {
+                textValue = "0," + textValue;
+            }
+            else if (textValue.Length >= 5)
+            {
+                if (textValue.StartsWith("0,"))
+                {
+                    textValue = textValue.Insert(textValue.Length - 4, ",").Replace("0,", string.Empty);
+                }
+                else if (textValue.Contains("00,"))
+                {
+                    textValue = textValue.Insert(textValue.Length - 4, ",").Replace("00,", string.Empty);
+                }
+                else if (textValue.Contains("000,"))
+                {
+                    textValue = textValue.Insert(textValue.Length - 4, ",").Replace("000,", string.Empty);
+                }
+                else if (textValue.Contains("0000,"))
+                {
+                    textValue = textValue.Insert(textValue.Length - 4, ",").Replace("0000,", string.Empty);
+                }
+                else
+                {
+                    textValue = textValue.Insert(textValue.Length - 4, ",");
+                }
+            }
+        }
+
+        private void Leave()
+        {
+            try
+            {
+                textValue = string.Format("{0}", Convert.ToDecimal(textValue, System.Globalization.CultureInfo.GetCultureInfo("pt-BR")));
+            }
+            catch { }
+        }
+
+        private void ValidState()
+        {
+            Valid = true;
+
+            if (Required && string.IsNullOrWhiteSpace(textValue))
+            {
+                Valid = false;
+                message = "Este campo deve ser informado obrigatóriamente.";
+                StateHasChanged();
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(textValue))
+            {
+                try
+                {
+                    decimal value = Convert.ToDecimal(textValue, System.Globalization.CultureInfo.GetCultureInfo("pt-BR"));
+
+                    if (value > MaxValue || value < MinValue)
+                    {
+                        Valid = false;
+                        message = "Valor superior ao máximo permitido ou inferior ao mínimo permitido.";
+                    }
+                }
+                catch
+                {
+                    Valid = false;
+                    message = "Valor superior ao máximo permitido ou inferior ao mínimo permitido.";
+                }
+
+                StateHasChanged();
+                return;
+            }
+
+            StateHasChanged();
+        }
+
+        protected override void OnAfterRender(bool firstRender)
+        {
+            if (firstRender)
+            {
+                ValidState();
+            }
+
+            base.OnAfterRender(firstRender);
+        }
+    }
