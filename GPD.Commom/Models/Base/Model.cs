@@ -46,9 +46,16 @@ namespace GPD.Commom.Models.Base
                 if (modelProperty.PropertyType.IsValueType || modelProperty.PropertyType == typeof(string) || modelProperty.PropertyType == typeof(byte[]))
                 {
                     var entityProperty = entityProperties.FirstOrDefault(item => item.Name == modelProperty.Name);
-                    if (entityProperty != null && modelProperty.PropertyType == entityProperty.PropertyType)
+                    if (entityProperty != null)
                     {
-                        entityProperty.SetValue(entity, modelProperty.GetValue(this));
+						if (modelProperty.PropertyType == entityProperty.PropertyType)
+						{
+							entityProperty.SetValue(entity, modelProperty.GetValue(this));
+						}
+						else if (entityProperty.PropertyType.IsEnum)
+						{
+							entityProperty.SetValue(entity, modelProperty.GetValue(this));
+						}
                     }
                 }
             }

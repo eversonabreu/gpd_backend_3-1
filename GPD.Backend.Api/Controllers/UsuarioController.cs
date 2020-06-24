@@ -7,6 +7,7 @@ using GPD.Commom.Models.Base;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
 
 namespace GPD.Backend.Api.Controllers
 {
@@ -32,9 +33,12 @@ namespace GPD.Backend.Api.Controllers
             model.Validate();
             model.Senha = Commom.Utils.Cryptography.Encrypt(loginService.GerarSenhaTemporaria());
             var retorno = base.Post(model);
-            string senha = Commom.Utils.Cryptography.Decrypt(model.Senha);
-            string remetente = usuarioRepository.GetById(User.Id, false).Email;
-            loginService.EnviarEmailSenha(remetente, model.Email, model.Nome, senha);
+			string remetente = usuarioRepository.GetById(User.Id, false).Email;
+			Task.Run(() => 
+			{
+				string senha = Commom.Utils.Cryptography.Decrypt(model.Senha);
+				loginService.EnviarEmailSenha(remetente, model.Email, model.Nome, senha);	
+			});
             return retorno;
         }
 
