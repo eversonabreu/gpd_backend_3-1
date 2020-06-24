@@ -1,0 +1,60 @@
+<style>
+    .loader {
+        border: 12px solid lightgray;
+        border-radius: 50%;
+        border-top: 12px solid #007bff;
+        border-bottom: 12px solid #007bff;
+        width: 90px;
+        height: 90px;
+        -webkit-animation: spin 1s linear infinite;
+        animation: spin 1s linear infinite;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        margin-top: -50px;
+        margin-left: -50px;
+    }
+
+    @@-webkit-keyframes spin {
+        0% { -webkit-transform: rotate(0deg); }
+        100% { -webkit-transform: rotate(360deg); }
+    }
+
+    @@keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+  .back {
+	position:absolute;
+	top:0;
+	left:0;
+	z-index:11;
+	background-color:#000;
+	width:100%;
+	height:100%;
+	opacity: .50;
+	filter: alpha(opacity=65);
+   }
+
+*{
+	margin:0;
+	padding:0;
+}
+
+</style>
+
+@if (Visible)
+{
+    <div class="back">
+        <div class="loader"></div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public bool Visible {get; set;}
+}
+
+
+

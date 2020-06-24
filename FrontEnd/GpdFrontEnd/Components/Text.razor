@@ -1,0 +1,101 @@
+<div class="form-group">
+    <label>@Label</label>
+    <div class="input-group">
+        <input type="text" class="form-control" @bind-value="textValue" maxlength="@MaxLength"
+               @bind-value:event="oninput" style="border: 1px solid @(Valid ? "#ced4da" : "#F7819F"); background-color: @(Valid ? "white" : "#F6CED8")"
+               @onblur="Leave" @onkeyup="KeyUp" readonly="@ReadOnly" disabled="@Disabled" placeholder="@PlaceHolder" />
+
+    </div>
+    <small class="form-text text-muted" style="color:red !important" hidden="@Valid">@message</small>
+</div>
+
+    @code {
+
+        private string oldValue;
+        private string textValue = string.Empty;
+
+        [Parameter]
+        public string Value
+        {
+            set
+            {
+                if (value != null && oldValue != OldValue(value))
+                {
+                    textValue = value;
+                    oldValue = textValue;
+                    ValidState();
+                }
+            }
+        }
+
+        private string OldValue(string value)
+        {
+            if (value != null)
+            {
+                return value;
+            }
+
+            return string.Empty;
+        }
+
+        [Parameter]
+        public bool Required { get; set; }
+
+        [Parameter]
+        public int MaxLength { get; set; } = int.MaxValue;
+
+        public bool Valid { get; private set; }
+
+        [Parameter]
+        public bool ReadOnly { get; set; }
+
+        [Parameter]
+        public bool Disabled { get; set; }
+
+        [Parameter]
+        public string PlaceHolder { get; set; }
+
+        [Parameter]
+        public string Label { get; set; }
+
+        private string message;
+
+        public string GetValue() => textValue;
+
+        public string GetValueOrNull() => textValue ?? null;
+
+        private void Leave() => ValidState();
+
+        private void KeyUp()
+        {
+            if (Disabled || ReadOnly)
+            {
+                return;
+            }
+
+            Leave();
+        }
+
+        private void ValidState()
+        {
+            Valid = true;
+
+            if (Required && string.IsNullOrWhiteSpace(textValue))
+            {
+                Valid = false;
+                message = "Este campo deve ser informado obrigatóriamente.";
+            }
+
+            StateHasChanged();
+        }
+
+        protected override void OnAfterRender(bool firstRender)
+        {
+            if (firstRender)
+            {
+                ValidState();
+            }
+
+            base.OnAfterRender(firstRender);
+        }
+    }

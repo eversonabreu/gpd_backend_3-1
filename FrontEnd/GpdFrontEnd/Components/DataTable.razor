@@ -125,18 +125,18 @@
 
         </div>
 
-        <div class="card-footer">
+        <div class="card-footer" style="margin-top: -25px;">
             @if (SemDadosParaExibir)
             {
                 <div style="float:left">
-                    <p style="font-style:italic">Sem dados para exibir</p>
+                    <p style="font-style:italic">Sem dados para exibir, insira ou altere o filtro de pesquisa para obter registros</p>
                 </div>
             }
 
             <div style="float:right">
-                <button class="btn btn-default" disabled="@(paginaAtual <= 0)" @onclick="VoltarPagina"><span class="oi oi-arrow-circle-left" style="font-size:18px"></span></button>
+                <button class="btn btn-default" style="border: 1px solid darkgray" disabled="@(paginaAtual <= 0)" @onclick="VoltarPagina"><span class="oi oi-arrow-circle-left" style="font-size:18px"></span></button>
                 @ObterPaginalAtual() de @GetTotalPages()
-                <button class="btn btn-default" disabled="@(paginaAtual + 1 >= GetTotalPages())" @onclick="AvancarPagina"><span class="oi oi-arrow-circle-right" style="font-size:18px"></span></button>
+                <button class="btn btn-default" style="border: 1px solid darkgray" disabled="@(paginaAtual + 1 >= GetTotalPages())" @onclick="AvancarPagina"><span class="oi oi-arrow-circle-right" style="font-size:18px"></span></button>
             </div>
         </div>
     </div>
@@ -153,13 +153,13 @@
     public IEnumerable<Column> Columns { get; set; }
 
     [Parameter]
-    public Action<int> OnPaginate { get; set; }
+    public Func<int, Task> OnPaginate { get; set; }
 
     [Parameter]
     public int Count { get; set; }
 
     [Parameter]
-    public Action<TItem> OnDelete { get; set; }
+    public Func<TItem, Task> OnDelete { get; set; }
 
     [Parameter]
     public Action<TItem> OnEdit { get; set; }
@@ -169,6 +169,9 @@
 
     [Parameter]
     public Action<TItem, bool> OnCheckBox { get; set; }
+
+    [Parameter]
+    public uint CountItemsInPage { get; set; } = 10;
 
     private bool SemDadosParaExibir;
 
@@ -197,7 +200,7 @@
             return 0;
         }
 
-        decimal value = Count / 10m;
+        decimal value = Count / (CountItemsInPage * 1m);
         int result = (int)Math.Ceiling(value);
         return result;
     }
