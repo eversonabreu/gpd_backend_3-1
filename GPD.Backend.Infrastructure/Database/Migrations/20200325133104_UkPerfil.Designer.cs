@@ -176,10 +176,10 @@ namespace GPD.Backend.Infrastructure.Database.Migrations
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<bool>("Administrador")
-                        .HasColumnType("boolean");
+                        .HasColumnType("bit");
 
                     b.Property<bool>("Ativo")
-                        .HasColumnType("boolean");
+                        .HasColumnType("bit");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -224,13 +224,13 @@ namespace GPD.Backend.Infrastructure.Database.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<bool>("PermiteEditar")
-                        .HasColumnType("boolean");
+                        .HasColumnType("bit");
 
                     b.Property<bool>("PermiteExcluir")
-                        .HasColumnType("boolean");
+                        .HasColumnType("bit");
 
                     b.Property<bool>("PermiteInserir")
-                        .HasColumnType("boolean");
+                        .HasColumnType("bit");
 
                     b.HasKey("Id")
                         .HasName("PkUsuarioFuncionalidade");

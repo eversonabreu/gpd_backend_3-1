@@ -66,7 +66,7 @@ namespace GPD.Backend.Infrastructure.Database
             string password = configuration["DatabaseConnectionSettings:Password"];
             string host = configuration["DatabaseConnectionSettings:Host"];
             string database = configuration["DatabaseConnectionSettings:Database"];
-            string connectionStringDatabase = string.Format($"{connectionDatabaseStringBase}", database, host, userId, password);
+            string connectionStringDatabase = string.Format($"{connectionDatabaseStringBase}", host, database, userId, password);
             return connectionStringDatabase;
         }
 

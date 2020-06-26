@@ -25,7 +25,7 @@ namespace GPD.Backend.Infrastructure.Database.Migrations
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<DateTime>("DataRegistro")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("datetime");
 
                     b.Property<long>("IdRegistro")
                         .HasColumnType("bigint");
@@ -125,13 +125,13 @@ namespace GPD.Backend.Infrastructure.Database.Migrations
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<bool>("AcumulaMeta")
-                        .HasColumnType("boolean");
+                        .HasColumnType("bit");
 
                     b.Property<bool>("AcumulaRealizado")
-                        .HasColumnType("boolean");
+                        .HasColumnType("bit");
 
                     b.Property<bool>("Corporativo")
-                        .HasColumnType("boolean");
+                        .HasColumnType("bit");
 
                     b.Property<string>("Formula")
                         .HasColumnType("text");
@@ -141,9 +141,11 @@ namespace GPD.Backend.Infrastructure.Database.Migrations
 
                     b.Property<long?>("IdUsuarioResponsavel")
                         .HasColumnType("bigint");
-
-                    b.Property<string>("Identificador")
-                        .HasColumnType("text");
+						
+					b.Property<string>("Identificador")
+                        .IsRequired()
+                        .HasColumnType("character varying(30)")
+                        .HasMaxLength(30);
 
                     b.Property<string>("Nome")
                         .IsRequired()
@@ -157,7 +159,7 @@ namespace GPD.Backend.Infrastructure.Database.Migrations
                         .HasColumnType("smallint");
 
                     b.Property<bool>("PossuiCardinalidade")
-                        .HasColumnType("boolean");
+                        .HasColumnType("bit");
 
                     b.Property<int>("TipoCalculo")
                         .HasColumnType("integer");
@@ -349,7 +351,7 @@ namespace GPD.Backend.Infrastructure.Database.Migrations
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<bool>("Ativo")
-                        .HasColumnType("boolean");
+                        .HasColumnType("bit");
 
                     b.Property<DateTime>("DataInicio")
                         .HasColumnType("date");
@@ -444,10 +446,10 @@ namespace GPD.Backend.Infrastructure.Database.Migrations
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<bool>("Administrador")
-                        .HasColumnType("boolean");
+                        .HasColumnType("bit");
 
                     b.Property<bool>("Ativo")
-                        .HasColumnType("boolean");
+                        .HasColumnType("bit");
 
                     b.Property<string>("Cpf")
                         .IsRequired()
@@ -527,13 +529,13 @@ namespace GPD.Backend.Infrastructure.Database.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<bool>("PermiteEditar")
-                        .HasColumnType("boolean");
+                        .HasColumnType("bit");
 
                     b.Property<bool>("PermiteExcluir")
-                        .HasColumnType("boolean");
+                        .HasColumnType("bit");
 
                     b.Property<bool>("PermiteInserir")
-                        .HasColumnType("boolean");
+                        .HasColumnType("bit");
 
                     b.HasKey("Id")
                         .HasName("PkUsuarioFuncionalidade");

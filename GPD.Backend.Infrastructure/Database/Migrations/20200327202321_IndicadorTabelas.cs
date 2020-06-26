@@ -78,7 +78,7 @@ namespace GPD.Backend.Infrastructure.Database.Migrations
                 {
                     Id = table.Column<long>(nullable: false)
                         .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
-                    Identificador = table.Column<string>(nullable: true),
+                    Identificador = table.Column<string>(maxLength: 30, nullable: false),
                     Ativo = table.Column<bool>(nullable: false),
                     Nome = table.Column<string>(maxLength: 255, nullable: false),
                     Ordem = table.Column<short>(nullable: true),
