@@ -43,7 +43,7 @@ namespace GPD.Backend.Api
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<DatabaseContext>(options => options.UseNpgsql(DatabaseContext.GetDatabaseStringConnection(configuration)));
+            services.AddDbContext<DatabaseContext>(options => options.UseSqlServer(DatabaseContext.GetDatabaseStringConnection(configuration)));
             services.AddScoped<DatabaseContext>();
 
             services.AddMvc(options =>

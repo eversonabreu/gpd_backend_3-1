@@ -1,5 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+﻿using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace GPD.Backend.Infrastructure.Database.Migrations
 {
@@ -12,7 +12,7 @@ namespace GPD.Backend.Infrastructure.Database.Migrations
                 columns: table => new
                 {
                     Id = table.Column<long>(nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
                     Nome = table.Column<string>(maxLength: 255, nullable: false),
                     Controlador = table.Column<string>(maxLength: 255, nullable: false)
                 },
@@ -26,7 +26,7 @@ namespace GPD.Backend.Infrastructure.Database.Migrations
                 columns: table => new
                 {
                     Id = table.Column<long>(nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
                     Nome = table.Column<string>(maxLength: 100, nullable: false),
                     Descricao = table.Column<string>(maxLength: 500, nullable: false)
                 },
@@ -40,7 +40,7 @@ namespace GPD.Backend.Infrastructure.Database.Migrations
                 columns: table => new
                 {
                     Id = table.Column<long>(nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
                     Nome = table.Column<string>(maxLength: 255, nullable: false),
                     Login = table.Column<string>(maxLength: 150, nullable: false),
                     Senha = table.Column<string>(type: "text", nullable: false),
@@ -58,7 +58,7 @@ namespace GPD.Backend.Infrastructure.Database.Migrations
                 columns: table => new
                 {
                     Id = table.Column<long>(nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
                     IdPerfil = table.Column<long>(nullable: false),
                     IdUsuario = table.Column<long>(nullable: false)
                 },
@@ -84,7 +84,7 @@ namespace GPD.Backend.Infrastructure.Database.Migrations
                 columns: table => new
                 {
                     Id = table.Column<long>(nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
                     IdUsuario = table.Column<long>(nullable: false),
                     IdFuncionalidade = table.Column<long>(nullable: false),
                     PermiteInserir = table.Column<bool>(nullable: false),

@@ -23,6 +23,11 @@
                                 <th style="width:25px"></th>
                             }
 
+                            @if (OnSelect != null)
+                            {
+                                <th></th>
+                            }
+
                             @foreach (var col in Columns)
                             {
                                 string width = !string.IsNullOrWhiteSpace(col.Width) ? $"width:{col.Width}" : "width:auto";
@@ -60,6 +65,11 @@
                                         <th>
                                             <input type="checkbox" style="width:20px; height:20px" checked="@value" @onclick="@(() => OnCheckBox?.Invoke(item, !value))" />
                                         </th>
+                                    }
+
+                                    @if (OnSelect != null)
+                                    {
+                                        <th><button class="btn btn-primary" @onclick="@(() => OnSelect.Invoke(item))">Selecionar</button></th>
                                     }
 
                                     @foreach (var col in Columns)
@@ -129,7 +139,7 @@
             @if (SemDadosParaExibir)
             {
                 <div style="float:left">
-                    <p style="font-style:italic">Sem dados para exibir, insira ou altere o filtro de pesquisa para obter registros</p>
+                    <p style="font-style:italic">Sem dados para exibir, use o filtro de pesquisa para obter registros</p>
                 </div>
             }
 
@@ -154,6 +164,9 @@
 
     [Parameter]
     public Func<int, Task> OnPaginate { get; set; }
+
+    [Parameter]
+    public Func<TItem, Task> OnSelect { get; set; }
 
     [Parameter]
     public int Count { get; set; }

@@ -1,6 +1,6 @@
 ﻿using System;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace GPD.Backend.Infrastructure.Database.Migrations
 {
@@ -13,7 +13,7 @@ namespace GPD.Backend.Infrastructure.Database.Migrations
                 columns: table => new
                 {
                     Id = table.Column<long>(nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
                     NomeTabela = table.Column<string>(maxLength: 150, nullable: false),
                     IdRegistro = table.Column<long>(nullable: false),
                     DataRegistro = table.Column<DateTime>(nullable: false),
@@ -31,7 +31,7 @@ namespace GPD.Backend.Infrastructure.Database.Migrations
                 columns: table => new
                 {
                     Id = table.Column<long>(nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
                     Nome = table.Column<string>(maxLength: 150, nullable: false),
                     Tipo = table.Column<int>(nullable: false),
                     Descricao = table.Column<string>(maxLength: 500, nullable: true)
@@ -46,7 +46,7 @@ namespace GPD.Backend.Infrastructure.Database.Migrations
                 columns: table => new
                 {
                     Id = table.Column<long>(nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
                     Nome = table.Column<string>(maxLength: 150, nullable: false),
                     Descricao = table.Column<string>(maxLength: 500, nullable: true),
                     Ativo = table.Column<bool>(nullable: false),
@@ -63,7 +63,7 @@ namespace GPD.Backend.Infrastructure.Database.Migrations
                 columns: table => new
                 {
                     Id = table.Column<long>(nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
                     Descricao = table.Column<string>(maxLength: 255, nullable: false),
                     Sigla = table.Column<string>(maxLength: 10, nullable: false)
                 },
@@ -77,7 +77,7 @@ namespace GPD.Backend.Infrastructure.Database.Migrations
                 columns: table => new
                 {
                     Id = table.Column<long>(nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
                     Identificador = table.Column<string>(nullable: true),
                     Ativo = table.Column<bool>(nullable: false),
                     Nome = table.Column<string>(maxLength: 255, nullable: false),
@@ -121,7 +121,7 @@ namespace GPD.Backend.Infrastructure.Database.Migrations
                 columns: table => new
                 {
                     Id = table.Column<long>(nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
                     IdProjeto = table.Column<long>(nullable: false),
                     IdIndicador = table.Column<long>(nullable: false),
                     DataLancamento = table.Column<DateTime>(type: "date", nullable: false),

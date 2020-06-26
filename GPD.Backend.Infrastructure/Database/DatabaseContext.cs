@@ -34,11 +34,11 @@ namespace GPD.Backend.Infrastructure.Database
                     .AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
                 var configuration = builder.Build();
                 string connectionStringDatabase = GetDatabaseStringConnection(configuration);
-                builderContext.UseNpgsql(connectionStringDatabase);
+                builderContext.UseSqlServer(connectionStringDatabase);
             }
             else
             {
-                builderContext.UseNpgsql(args.First());
+                builderContext.UseSqlServer(args.First());
             }
 
             return new DatabaseContext(builderContext.Options);
@@ -65,15 +65,8 @@ namespace GPD.Backend.Infrastructure.Database
             string userId = configuration["DatabaseConnectionSettings:UserId"];
             string password = configuration["DatabaseConnectionSettings:Password"];
             string host = configuration["DatabaseConnectionSettings:Host"];
-            string port = configuration["DatabaseConnectionSettings:Port"];
             string database = configuration["DatabaseConnectionSettings:Database"];
-            string pooling = configuration["DatabaseConnectionSettings:Pooling"];
-            string minPoolSize = configuration["DatabaseConnectionSettings:MinPoolSize"];
-            string maxPoolSize = configuration["DatabaseConnectionSettings:MaxPoolSize"];
-			string connectionLifeTime = configuration["DatabaseConnectionSettings:ConnectionLifeTime"];
-
-            string connectionStringDatabase = string.Format($"{connectionDatabaseStringBase}", userId,
-                                                            password, host, port, database, pooling, minPoolSize, maxPoolSize, connectionLifeTime);
+            string connectionStringDatabase = string.Format($"{connectionDatabaseStringBase}", database, host, userId, password);
             return connectionStringDatabase;
         }
 

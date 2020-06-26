@@ -1,5 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+﻿using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace GPD.Backend.Infrastructure.Database.Migrations
 {
@@ -12,7 +12,7 @@ namespace GPD.Backend.Infrastructure.Database.Migrations
                 columns: table => new
                 {
                     Id = table.Column<long>(nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
                     IdProjeto = table.Column<long>(nullable: false),
                     Descricao = table.Column<string>(nullable: false),
                     Tipo = table.Column<int>(nullable: false),

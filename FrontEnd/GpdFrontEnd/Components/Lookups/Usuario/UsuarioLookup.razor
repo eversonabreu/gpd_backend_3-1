@@ -1,0 +1,156 @@
+@inject IModalService Modal
+@inject GpdFrontEnd.Services.System.HttpService httpService
+@using System.Text.Json
+@inject NotificationService notificationService
+
+<div class="form-group">
+    <label>@Label</label>
+    <div class="input-group">
+        <input type="text" @bind="nomeUsuario" class="form-control" readonly="@Readonly" disabled="@(true)" placeholder="@PlaceHolder" style="border-right:0px; background-color:#dedede; border: 1px solid @(Valid ? "#ced4da" : "#F7819F");" />
+        <div class="input-group-prepend">
+            <div class="input-group-text" style="padding-left: 0px; padding-right: 2px; padding-bottom: 0px;">
+                <button hidden="@Readonly" @onclick="Limpar" class="btn btn-default" style="cursor: pointer; margin-top: -7px; width: 35px; height: 37px; border-radius: 0px; margin-right: -2px;">
+                    <span class="oi oi-delete" style="margin-left:-3px; margin-top:3px;"></span>
+                </button>
+            </div>
+        </div>
+        <div class="input-group-prepend">
+            <div class="input-group-text" style="padding-left: 0px; padding-right: 2px; padding-bottom: 0px;">
+                <button hidden="@Readonly" @onclick="Pesquisar" class="btn btn-default" style="cursor: pointer; margin-top: -7px; width: 35px; height: 37px; border-radius: 0px; margin-right: -2px;">
+                    <span class="oi oi-magnifying-glass" style="margin-left:-3px; margin-top:3px;"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <small class="form-text text-muted" style="color:red !important" hidden="@Valid">@message</small>
+</div>
+
+@code
+{
+    private string oldValue;
+    private string textValue = string.Empty;
+
+    private string nomeUsuario;
+
+    [Parameter]
+    public long? Value
+    {
+        set
+        {
+            if (value.HasValue && oldValue != OldValue(value))
+            {
+                textValue = value.Value.ToString();
+                oldValue = textValue;
+                Task.Run(async () => await BuscarUsuarioAsync());
+            }
+        }
+    }
+
+    private async Task BuscarUsuarioAsync()
+    {
+
+        var http = await httpService.GetHttpAsync();
+        if (http != null)
+        {
+            try
+            {
+                long id = long.Parse(textValue);
+                var response = await http.GetAsync($"usuario/id/{id}");
+                if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
+                {
+                    throw new Exception(response.Content.ReadAsStringAsync().Result);
+                }
+                var content = await response.Content.ReadAsStringAsync();
+                var result = JsonSerializer.Deserialize<UsuarioLookupView.UsuarioLookupClass>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                nomeUsuario = result.Nome;
+                textValue = result.Id.ToString();
+            }
+            catch (Exception exc)
+            {
+                Console.WriteLine(exc.Message);
+                notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = "Erro", Detail = "Um erro aconteceu ao realizar a pesquisa. (Lookup de usuário)", Duration = 5000 });
+            }
+        }
+
+        ValidState();
+    }
+
+    private string OldValue(long? value)
+    {
+       if (value.HasValue)
+       {
+            return value.Value.ToString();
+       }
+
+       return string.Empty;
+    }
+        
+    private string message;
+
+    public bool Valid;
+
+    [Parameter]
+    public string Label { get; set; }
+
+    [Parameter]
+    public string PlaceHolder { get; set; }
+
+    [Parameter]
+    public bool Readonly { get; set; }
+
+    [Parameter]
+    public bool Required { get; set; }
+
+    private async Task Pesquisar()
+    {
+       var options = new ModalOptions()
+       {
+           DisableBackgroundCancel = true,
+           Position = Blazored.Modal.ModalPosition.Center
+       };
+
+       var lookup = Modal.Show<UsuarioLookupView>("Consulta de usuários", options);
+       var result = await lookup.Result;
+       if (!result.Cancelled)
+       {
+         var usuario = ((UsuarioLookupView.UsuarioLookupClass) result.Data);
+         nomeUsuario = usuario.Nome;
+         textValue = usuario.Id.ToString();
+         ValidState();
+       }
+    }
+
+    private void Limpar()
+    {
+        nomeUsuario = string.Empty;
+        textValue = null;
+        ValidState();
+    }
+
+    private void ValidState()
+    {
+        Valid = true;
+
+        if (Required && string.IsNullOrWhiteSpace(textValue))
+        {
+            Valid = false;
+            message = "Este campo deve ser informado obrigatóriamente.";
+        }
+
+        StateHasChanged();
+    }
+
+    public long GetValue() => long.Parse(textValue);
+
+    public long? GetValueOrNull() => string.IsNullOrWhiteSpace(textValue) ? null : (long?) GetValue();
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            ValidState();
+        }
+
+        base.OnAfterRender(firstRender);
+    }
+}

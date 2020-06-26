@@ -7,6 +7,7 @@ using GpdFrontEnd.Services.System;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Radzen;
+using Blazored.Modal;
 
 namespace GpdFrontEnd
 {
@@ -21,6 +22,7 @@ namespace GpdFrontEnd
             builder.Services.AddScoped<Session>();
             builder.Services.AddScoped<HttpService>();
             builder.Services.AddScoped<NotificationService>();
+            builder.Services.AddBlazoredModal();
             AddServices(builder.Services);
             await builder.Build().RunAsync();
         }
