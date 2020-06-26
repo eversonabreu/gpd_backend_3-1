@@ -186,12 +186,15 @@
                     {
                         response = await http.PostAsJsonAsync("usuario", usuarioCadastro);
                         message = "Usuário inserido com sucesso.\nUm e-mail foi enviado ao usuário com a sua senha temporária.";
-                        Id = long.Parse(response.Content.ReadAsStringAsync().Result);
                     }
 
                     if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
                     {
                         throw new Exception(response.Content.ReadAsStringAsync().Result);
+                    }
+                    else if (!Id.HasValue)
+                    {
+                        Id = long.Parse(response.Content.ReadAsStringAsync().Result);
                     }
 
                     notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = "Sucesso", Detail = message, Duration = 6000 });

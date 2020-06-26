@@ -133,12 +133,15 @@
                     {
                         response = await http.PostAsJsonAsync("unidade-medida", unidadeMedidaCadastro);
                         message = "Registro inserido com sucesso.";
-                        Id = long.Parse(response.Content.ReadAsStringAsync().Result);
                     }
 
                     if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
                     {
                         throw new Exception(response.Content.ReadAsStringAsync().Result);
+                    }
+                    else if (!Id.HasValue)
+                    {
+                        Id = long.Parse(response.Content.ReadAsStringAsync().Result);
                     }
 
                     notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = "Sucesso", Detail = message, Duration = 6000 });
