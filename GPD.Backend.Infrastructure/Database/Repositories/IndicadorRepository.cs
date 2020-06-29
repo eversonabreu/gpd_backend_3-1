@@ -20,8 +20,6 @@ namespace GPD.Backend.Infrastructure.Database.Repositories
 
         protected override void BeforeUpdate(Indicador oldValue, Indicador newValue)
         {
-            newValue.Identificador = oldValue.Identificador;
-
             if (oldValue.TipoCalculo == TipoCalculo.NaoCalculado && newValue.TipoCalculo != TipoCalculo.NaoCalculado)
             {
                 string termoPesquisa = $"[{newValue.Identificador}]";
@@ -34,6 +32,16 @@ namespace GPD.Backend.Infrastructure.Database.Repositories
 
         protected override void AfterUpdate(Indicador oldValue, Indicador newValue)
         {
+			if (oldValue.Identificador != newValue.Identificador && oldValue.TipoCalculo == TipoCalculo.NaoCalculado)
+			{
+				string termoPesquisa = $"[{newValue.Identificador}]";
+				var results = Filter(item => item.TipoCalculo != TipoCalculo.NaoCalculado && item.Formula.Contains(termoPesquisa));
+				if (results?.Any())
+				{
+					
+				}
+			}
+			
             if (oldValue.Corporativo && !newValue.Corporativo)
             {
                 var lista = projetoEstruturaOrganizacionalRepository.Filter(item => item.Tipo == TipoProjetoEstruturaOrganizacional.Corporativo && item.IdIndicador == newValue.Id);

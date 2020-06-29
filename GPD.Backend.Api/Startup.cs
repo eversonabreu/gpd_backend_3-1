@@ -49,7 +49,7 @@ namespace GPD.Backend.Api
             services.AddMvc(options =>
             {
                 options.EnableEndpointRouting = false;
-            }).AddNewtonsoftJson();
+            }).AddNewtonsoftJson(x => x.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
 
             services.AddCors(options =>
             {
