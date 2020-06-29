@@ -1,7 +1,7 @@
 <div class="form-group">
     <label>@Label</label>
         <div class="input-group">
-            <select class="form-control" @onchange="@(obj => { textValue = obj.Value.ToString(); ValidState(); })"
+            <select class="form-control" @onchange="@(obj => { textValue = obj.Value.ToString(); ValidState(); OnSelect?.Invoke(GetValue()); })"
                 readonly="@ReadOnly" disabled="@Disabled" style="border: 1px solid @(Valid ? "#ced4da" : "#F7819F"); background-color: @(Valid ? "white" : "#F6CED8")">
                 @if (AllowInvalidOption)
                 {
@@ -91,12 +91,15 @@
         {
             Valid = false;
             message = "Este campo deve ser informado obrigatóriamente.";
-            StateHasChanged();
-            return;
         }
+
+        StateHasChanged();
     }
 
     public long GetValue() => long.Parse(textValue);
 
-    public long? GetValueOrNull() => string.IsNullOrEmpty(textValue) ? null : (long?) long.Parse(textValue);
+    public long? GetValueOrNull() => string.IsNullOrEmpty(textValue) || textValue == "0" ? null : (long?) long.Parse(textValue);
+
+    [Parameter]
+    public Action<long> OnSelect {get; set;}
 }

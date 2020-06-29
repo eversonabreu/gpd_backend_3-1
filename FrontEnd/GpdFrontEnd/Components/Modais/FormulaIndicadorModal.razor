@@ -1,0 +1,251 @@
+@inject IJSRuntime js
+@inject GpdFrontEnd.Services.System.HttpService httpService
+@inject NotificationService notificationService
+@inject IModalService ModalService
+
+<style>
+    .blazored-modal {
+        width: 60vw !important;
+    }
+</style>
+
+<div style="margin-top: -35px; font-size:14px; color: #ccc">
+    <i>Insira no campo abaixo a fórmula deste indicador. A fórmula deve representar uma expressão matemática válida.</i><br/>
+    <i>Utilize "." como separador decimal.</i><br/>
+    <i>Para referenciar outros indicadores nesta fórmula, utilize a pesquisa abaixo.</i><br/>
+    <i>Somente indicadores não calculados podem ser referenciados na fórmula.</i><br/>
+    <i>Para excluir um indicador desta fórmula, posiocione o cursor após "]" e pressione a tecla de exclusão.</i>
+</div>
+
+<div class="row" style="margin-top:5px">
+    <div class="col-md-12">
+        <button class="btn btn-default" @onclick="Cancelar" style="float:right; width:120px; border-radius:0px; border: 1px solid black; background-color:white"><span class="oi oi-circle-x"></span> Cancelar</button>
+        <button @onclick="ValidarAsync" class="btn btn-warning" style="float:right; margin-right:5px; width:120px; border-radius:0px"><span class="oi oi-circle-check"></span> Validar</button>
+        <button @onclick="AplicarAsync" class="btn btn-info" style="float:right; margin-right:5px; width:120px; border-radius:0px"><span class="oi oi-flash"></span> Aplicar</button>
+    </div>
+</div>
+<div class="row" style="margin-top:10px">
+    <div class="col-md-12">
+        <textarea id="iptIdentificador" onkeydown="onkeyDownFormulaIndicador(this, event)" class="form-control" style="font-size:18px; font-weight:600; height:50px" 
+            onpaste="return false" oncut="return false" @bind="Value" />
+    </div>
+</div>
+<div class="row" style="margin-top:30px">
+    <div class="col-md-12">
+        <div class="input-group">
+            <input @bind-value="filter" @bind-value:event="oninput" @onkeydown="KeyDownPesquisarAsync" class="form-control" type="search" placeholder="Digite aqui para pesquisar indicadores..." aria-label="Search" style="border-right: none;">
+            <div class="input-group-append">
+                <div @onclick="PesquisarAsync" class="input-group-text" style="background-color: #FFF"><span class="oi oi-magnifying-glass"></span></div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row" style="margin-top:10px">
+    <div class="col-md-12">
+        <DataTable @ref="dataTable" TItem="Indicador" Data="data" Count="count" Columns="columns" OnPaginate="OnPaginateAsync" OnSelect="OnSelectAsync"/>     
+    </div>
+</div>
+
+<Loader Visible="loaderVisible"/>
+
+@code
+{
+    [CascadingParameter] 
+    public BlazoredModalInstance BlazoredModal { get; set; }
+
+    [Parameter] 
+    public string Value { get; set; }
+
+    private DataTable<Indicador> dataTable;
+    private IList<Indicador> data;
+    private IList<DataTable<Indicador>.Column> columns;
+    private int count;
+    private string filter;
+    private int page = 0;
+    private bool loaderVisible;
+    private string oldFilter;
+
+    private async Task OnPaginateAsync(int page)
+    {
+        this.page = page;
+        await RefreshPageAsync();
+    }
+
+    private async Task OnSelectAsync(Indicador indicador)
+    {
+        string identificador = $"[{indicador.Identificador}]";
+        await js.InvokeVoidAsync("adicionarIndicadorFormula", identificador);
+    }
+
+    private async Task RefreshPageAsync()
+    {
+        if ((filter?.Trim().Length ?? 0) < 3)
+        {
+            filter = oldFilter;
+        }
+
+        await PesquisarAsync();
+    }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        columns = new List<DataTable<Indicador>.Column>();
+        columns.Add(new DataTable<Indicador>.Column
+        {
+            PropertyName = "Identificador",
+            DisplayName = "Identificador"
+        });
+        columns.Add(new DataTable<Indicador>.Column
+        {
+            PropertyName = "Nome",
+            DisplayName = "Nome"
+        });
+        columns.Add(new DataTable<Indicador>.Column
+        {
+            PropertyName = "_Corporativo",
+            DisplayName = "Corporativo",
+            Width = "50px"
+        });
+        data = new List<Indicador>();
+    }
+
+    private async Task KeyDownPesquisarAsync(KeyboardEventArgs key)
+    {
+        if (key.Key.ToUpper() == "ENTER")
+        {
+            await PesquisarAsync();
+            oldFilter = new string(filter.ToArray());
+        }
+    }
+
+    private async Task PesquisarAsync()
+    {
+        if ((filter?.Trim().Length ?? 0) < 3)
+        {
+            notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Warning, Summary = "Alerta", Detail = "Insira no mínimo três (3) caracteres para pesquisar", Duration = 5000 });
+            return;
+        }
+
+        await BuscarIndicadorAsync();
+    }
+
+    private string GetFilter()
+    {
+        string filterAux = filter.Replace("\"", "'").Trim().TrimEnd('\\').ToUpper();
+
+        if (filterAux.Length < 3)
+        {
+            return "false";
+        }
+
+        string expression  = $"TipoCalculo == 1 && (Identificador.Trim().ToUpper().Contains(\"{filterAux}\") || Nome.Trim().ToUpper().Contains(\"{filterAux}\"))";
+        return System.Web.HttpUtility.UrlEncode(expression);
+    }
+
+    private async Task BuscarIndicadorAsync()
+    {
+        var http = await httpService.GetHttpAsync();
+        if (http != null)
+        {
+            SetVisibleLoader(true);
+            try
+            {
+                string expression = GetFilter();
+                var response = await http.GetAsync($"indicador?filter={expression}&page={page}&limit={dataTable.CountItemsInPage}");
+                if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
+                {
+                    throw new Exception(response.Content.ReadAsStringAsync().Result);
+                }
+
+                this.page = 0;
+                var result = await httpService.GetResultSetAsync<Indicador>(response);
+                data = result.Data;
+                count = result.Count; 
+            }
+            catch (Exception exc)
+            {
+                data = null;
+                count = 0;
+                Console.WriteLine(exc.Message);
+                notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = "Erro", Detail = "Um erro aconteceu ao realizar a pesquisa.", Duration = 5000 });
+            }
+            SetVisibleLoader(false);
+        }
+    }
+
+    private void SetVisibleLoader(bool visible)
+    {
+        loaderVisible = visible;
+        StateHasChanged();
+    }
+
+    private void Cancelar()
+    {
+        BlazoredModal.Close(ModalResult.Cancel());
+    }
+
+    private async Task ValidarAsync()
+    {
+        await ValidoAsync();
+    }
+
+    private async Task AplicarAsync()
+    {
+        if (await ValidoAsync(false))
+        {
+            Value = await js.InvokeAsync<string>("obterIndicadorFormula");
+            BlazoredModal.Close(ModalResult.Ok<string>(Value));
+        }
+    }
+
+    private async Task<bool> ValidoAsync(bool visibleMessage = true)
+    {
+        string testValue = await js.InvokeAsync<string>("obterIndicadorFormula");
+        if (!string.IsNullOrWhiteSpace(testValue))
+        {
+            int posicao = 0;
+
+            while ((posicao = testValue.IndexOf('[')) > -1)
+            {
+                var builder = new System.Text.StringBuilder();
+                while (true)
+                {
+                    posicao++;
+                    char ch = testValue[posicao];
+                    if (ch == ']') break;
+                    builder.Append(ch);
+                }
+
+                string identificador = builder.ToString();
+                testValue = testValue.Replace($"[{identificador}]", "1");
+            }
+
+            try
+            {
+                var dataTable = new System.Data.DataTable();
+                dataTable.Compute(testValue, string.Empty);
+                if (visibleMessage)
+                {
+                    notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Info, Summary = "", Detail = "A fórmula é válida.", Duration = 5000 });
+                }
+                return true;
+            }
+            catch {}            
+        }
+
+        notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Warning, Summary = "Alerta", Detail = "A fórmula não representa uma expressão matemática.", Duration = 5000 });
+        return false;
+    }
+
+    class Indicador
+    {
+        public string Identificador {get; set;}
+
+        public string Nome {get; set;}
+
+        public bool Corporativo {get; set;}
+
+        public string _Corporativo { get => Corporativo ? "Sim" : "Não"; }
+    }
+}

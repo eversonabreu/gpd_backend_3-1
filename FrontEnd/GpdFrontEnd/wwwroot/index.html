@@ -57,6 +57,121 @@
             }, 1);
         }
 
+        function obterIndicadorFormula() {
+            var obj = document.getElementById('iptIdentificador');
+            return obj.value;
+        }
+
+        function adicionarIndicadorFormula(identificador) {
+            var obj = document.getElementById('iptIdentificador');
+            
+            for (var index = obj.selectionStart; index < obj.value.length; index++) {
+                if (obj.value[index] === ']') {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    obj.focus();
+                    return;
+                } else if (obj.value[index] === '[') {
+                    break;
+                }
+            }
+            
+            var first = obj.value.substring(0, obj.selectionStart);
+            var last = obj.value.substring(obj.selectionStart, obj.value.length);
+            var newValue = first + identificador;
+            obj.value = newValue + last;
+            obj.setSelectionRange(newValue.length, newValue.length);
+            obj.focus();
+	    }
+
+        function onkeyDownFormulaIndicador(obj, event) {
+
+            if (permiteCaracterFormulaIndicador(event) === false) {
+                event.preventDefault();
+                event.stopPropagation();
+                return;
+		    }
+		
+            if (event.key === 'Backspace' && obj.selectionStart !== obj.selectionEnd) {
+                event.preventDefault();
+                event.stopPropagation();
+                return;
+            }
+            
+            if (event.key === 'Backspace') {
+                if (obj.value[obj.selectionStart - 1] === ']') {
+                    var newStart = obj.selectionStart - 1;
+                    while (newStart > -1 && obj.value[newStart] !== '[') {
+                        newStart--;
+                    }
+                    
+                    var newValue = '';
+                    if (newStart > 0) {
+                        newValue = obj.value.substring(0, newStart) + obj.value.substr(obj.selectionStart);
+                        event.preventDefault();
+                        event.stopPropagation();
+                    } else {
+                        newValue = obj.value.substr(obj.selectionStart);
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    
+                    obj.value = newValue;
+                    obj.setSelectionRange(newStart, newStart);
+                    
+                } else {
+                    for (var index = obj.selectionStart; index < obj.value.length; index++) {
+                        if (obj.value[index] === ']') {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            break;
+                        } else if (obj.value[index] === '[') {
+                            break;
+                        }
+                    }
+                }
+            } else if (event.key != 'ArrowLeft' && event.key != 'ArrowRight') {
+				for (var index = obj.selectionStart; index < obj.value.length; index++) {
+					if (obj.value[index] === ']') {
+						event.preventDefault();
+						event.stopPropagation();
+						break;
+					} else if (obj.value[index] === '[') {
+						break;
+					}
+				}
+		    }
+        }
+
+        function permiteCaracterFormulaIndicador(event) {
+
+            if (event.key == '0' || 
+                event.key == '1' ||
+                event.key == '2' ||
+                event.key == '3' ||
+                event.key == '4' ||
+                event.key == '5' ||
+                event.key == '6' ||
+                event.key == '7' ||
+                event.key == '8' ||
+                event.key == '9' ||
+                event.key == '+' ||
+                event.key == '-' ||
+                event.key == '/' ||
+                event.key == '*' ||
+                event.key == '(' ||
+                event.key == ')' ||
+                event.key == ' ' ||
+                event.key == 'Backspace' ||
+                event.key == '.' ||
+                event.key == 'ArrowLeft' ||
+                event.key == 'ArrowRight') {
+                return true;
+            }
+
+            return false;
+        }
+
     </script>
     <script src="_content/Radzen.Blazor/Radzen.Blazor.js"></script>
 </body>

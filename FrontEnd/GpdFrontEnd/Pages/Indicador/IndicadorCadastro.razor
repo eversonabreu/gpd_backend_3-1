@@ -7,6 +7,8 @@
 @using System.Text.Json
 @using  GpdFrontEnd.Components.Lookups.Usuario
 @using  GpdFrontEnd.Components.Lookups.UnidadeMedida
+@inject IModalService Modal
+@using GpdFrontEnd.Components.Modais
 
 <nav class="navbar navbar-default navbar-fixed-top" style="height:56px; background-image: linear-gradient(180deg, #b0d2f7 100%, #007bff 0%); justify-content:center">
     <button @onclick="SalvarAsync" class="btn btn-success" style="width:120px; border-radius:0px"><span class="oi oi-circle-check"></span> Salvar</button>
@@ -14,6 +16,8 @@
     <button class="btn btn-default" @onclick="Cancelar" style="width:120px; border-radius:0px; border: 1px solid black; background-color:white"><span class="oi oi-circle-x"></span> Cancelar</button>
     &nbsp;&nbsp;
     <button hidden="@(!Id.HasValue)" class="btn btn-danger" @onclick="ExcluirAsync"><span class="oi oi-trash"></span> Excluir</button>
+    &nbsp;&nbsp;
+    <button hidden="@(indicador.TipoCalculo <= 1)" class="btn btn-info" @onclick="AbrirModalFormulaAsync"><span class="oi oi-calculator"></span> Fórmula</button>
 </nav>
 
 <div class="card">
@@ -134,10 +138,17 @@
             </div>
 
             <div class="col-md-3">
-                <SelectOption @ref="SelTipoCalculo" Label="Tipo de cálculo" Required="true" AllowInvalidOption="true" Value="@indicador.TipoCalculo" Options="optionsTipoCalculo" />
+                <SelectOption @ref="SelTipoCalculo" OnSelect="SelecaoTipoCalculo" Label="Tipo de cálculo" Required="true" AllowInvalidOption="true" Value="@indicador.TipoCalculo" Options="optionsTipoCalculo" />
             </div>
 
         </div>
+
+        @if (!string.IsNullOrWhiteSpace(indicador.Formula))
+        {
+            <div class="row">
+                <h5 style="margin-left: 15px">Fórmula: @indicador.Formula</h5>
+            </div>
+        }
 
         <div class="row">
             <div class="col-md-12">
@@ -237,7 +248,14 @@
                 catch (Exception exc)
                 {
                     Console.WriteLine(exc.Message);
-                    notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = "Erro", Detail = "Um erro aconteceu ao excluir o registro.\nVerifique se este registro possui dependências.", Duration = 7000 });
+                    if (exc.Message.Contains("BusinessException"))
+                    {
+                        notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = "Erro", Detail = exc.Message.Split('|')[0], Duration = 7000 });
+                    }
+                    else
+                    {
+                        notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = "Erro", Detail = "Um erro aconteceu ao excluir o registro.\nVerifique se este registro possui dependências.", Duration = 7000 });
+                    }
                 }
                 SetVisibleLoader(false);
             }
@@ -255,6 +273,19 @@
            && SelTipoCalculo.Valid && SelTipoPeriodicidade.Valid && SelTipoRemuneracao.Valid && LkpUnidadeMedida.Valid;
         if (formularioValido)
         {
+            if (indicador.TipoCalculo > 1)
+            {
+                if (string.IsNullOrWhiteSpace(indicador.Formula))
+                {
+                    notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Warning, Summary = "Alerta", Detail = "É necessário inserir uma fórmula para este indicador.", Duration = 6000 });
+                    return;
+                }
+            }
+            else
+            {
+                indicador.Formula = null;
+            }
+
             var http = await httpService.GetHttpAsync();
             if (http != null)
             {
@@ -305,6 +336,10 @@
                     {
                         notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Warning, Summary = "Alerta", Detail = "Este identificador já está sendo utilizado em outro registro.", Duration = 5000 });
                     }
+                    else if (exc.Message.Contains("BusinessException"))
+                    {
+                        notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = "Erro", Detail = exc.Message.Split('|')[0], Duration = 7000 });
+                    }
                     else
                     {
                         notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = "Erro", Detail = "Um erro aconteceu ao salvar os dados.", Duration = 5000 });
@@ -323,6 +358,31 @@
     {
         loaderVisible = visible;
         StateHasChanged();
+    }
+
+    private void SelecaoTipoCalculo(long valor)
+    {
+        indicador.TipoCalculo = (int) valor;
+        StateHasChanged();
+    }
+
+    private async Task AbrirModalFormulaAsync()
+    {
+       var options = new ModalOptions()
+       {
+           DisableBackgroundCancel = true,
+           Position = Blazored.Modal.ModalPosition.Center
+       };
+
+       var parameters = new ModalParameters();
+       parameters.Add("Value", indicador.Formula);
+
+       var lookup = Modal.Show<FormulaIndicadorModal>("Fórmula do indicador", parameters, options);
+       var result = await lookup.Result;
+       if (!result.Cancelled)
+       {
+           indicador.Formula = result.Data.ToString();
+       }
     }
 
     private TextIndicador TxIdentificador;
