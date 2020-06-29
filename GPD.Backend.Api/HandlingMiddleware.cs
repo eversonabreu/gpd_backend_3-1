@@ -41,14 +41,7 @@ namespace GPD.Backend.Api
             var response = context.Response;
             response.ContentType = "application/json";
             response.StatusCode = httpStatusCode;
-            await response.WriteAsync(JsonConvert.SerializeObject(new
-            {
-                error = new
-                {
-                    message = exception.Message,
-                    exception = exception.GetType().Name
-                }
-            })).ConfigureAwait(false);
+            await response.WriteAsync($"{exception.Message}|{exception.GetType().Name}").ConfigureAwait(false);
         }
     }
 }

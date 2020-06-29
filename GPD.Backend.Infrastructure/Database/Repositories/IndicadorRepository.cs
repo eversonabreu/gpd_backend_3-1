@@ -18,6 +18,15 @@ namespace GPD.Backend.Infrastructure.Database.Repositories
         {
             this.projetoEstruturaOrganizacionalRepository = projetoEstruturaOrganizacionalRepository;
         }
+		
+		protected override void BeforeDelete(Indicador entity)
+        {
+            string termoPesquisa = $"[{entity.Identificador}]";
+            if (FirstOrDefault(item => item.Formula.Contains(termoPesquisa), loadDependencies: false) != null)
+            {
+                throw new BusinessException("Não é possível excluir este indicador porque ele é usado como indicador base em outro(s) indicador(es).");
+            }
+        }
 
         protected override void BeforeUpdate(Indicador oldValue, Indicador newValue)
         {
