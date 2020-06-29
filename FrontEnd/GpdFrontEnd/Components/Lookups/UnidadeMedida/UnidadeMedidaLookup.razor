@@ -6,7 +6,7 @@
 <div class="form-group">
     <label>@Label</label>
     <div class="input-group">
-        <input type="text" @bind="nomeUsuario" class="form-control" readonly="@Readonly" disabled="@(true)" placeholder="@PlaceHolder" style="border-right:0px; background-color:#dedede; border: 1px solid @(Valid ? "#ced4da" : "#F7819F");" />
+        <input type="text" @bind="nomeUnidadeMedida" class="form-control" readonly="@Readonly" disabled="@(true)" placeholder="@PlaceHolder" style="border-right:0px; background-color:#dedede; border: 1px solid @(Valid ? "#ced4da" : "#F7819F");" />
         <div class="input-group-prepend">
             <div class="input-group-text" style="padding-left: 0px; padding-right: 2px; padding-bottom: 0px;">
                 <button hidden="@Readonly" @onclick="Limpar" class="btn btn-default" style="cursor: pointer; margin-top: -7px; width: 35px; height: 37px; border-radius: 0px; margin-right: -2px;">
@@ -30,7 +30,7 @@
     private string oldValue;
     private string textValue = string.Empty;
 
-    private string nomeUsuario;
+    private string nomeUnidadeMedida;
 
     [Parameter]
     public long? Value
@@ -41,34 +41,35 @@
             {
                 textValue = value.Value.ToString();
                 oldValue = textValue;
-                Task.Run(async () => await BuscarUsuarioAsync());
             }
         }
     }
 
-    private async Task BuscarUsuarioAsync()
+    public async Task BuscarUnidadeMedidaAsync()
     {
-
-        var http = await httpService.GetHttpAsync();
-        if (http != null)
+        if (textValue != "0")
         {
-            try
+            var http = await httpService.GetHttpAsync();
+            if (http != null)
             {
-                long id = long.Parse(textValue);
-                var response = await http.GetAsync($"usuario/id/{id}");
-                if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
+                try
                 {
-                    throw new Exception(response.Content.ReadAsStringAsync().Result);
+                    long id = long.Parse(textValue);
+                    var response = await http.GetAsync($"unidade-medida/id/{id}");
+                    if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
+                    {
+                        throw new Exception(response.Content.ReadAsStringAsync().Result);
+                    }
+                    var content = await response.Content.ReadAsStringAsync();
+                    var result = JsonSerializer.Deserialize<UnidadeMedidaLookupView.UnidadeMedidaLookupClass>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    nomeUnidadeMedida = $"{result.Sigla} ({result.Descricao})";
+                    textValue = result.Id.ToString();
                 }
-                var content = await response.Content.ReadAsStringAsync();
-                var result = JsonSerializer.Deserialize<UsuarioLookupView.UsuarioLookupClass>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                nomeUsuario = $"{result.Nome} ({result.Cpf})";
-                textValue = result.Id.ToString();
-            }
-            catch (Exception exc)
-            {
-                Console.WriteLine(exc.Message);
-                notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = "Erro", Detail = "Um erro aconteceu ao realizar a pesquisa. (Lookup de usuário)", Duration = 5000 });
+                catch (Exception exc)
+                {
+                    Console.WriteLine(exc.Message);
+                    notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = "Erro", Detail = "Um erro aconteceu ao realizar a pesquisa. (Lookup de unidade de medida)", Duration = 5000 });
+                }
             }
         }
 
@@ -109,12 +110,12 @@
            Position = Blazored.Modal.ModalPosition.Center
        };
 
-       var lookup = Modal.Show<UsuarioLookupView>("Consulta de usuários", options);
+       var lookup = Modal.Show<UnidadeMedidaLookupView>("Consulta de unidade de medida", options);
        var result = await lookup.Result;
        if (!result.Cancelled)
        {
-         var usuario = ((UsuarioLookupView.UsuarioLookupClass) result.Data);
-         nomeUsuario = $"{usuario.Nome} ({usuario.Cpf})";
+         var usuario = ((UnidadeMedidaLookupView.UnidadeMedidaLookupClass) result.Data);
+         nomeUnidadeMedida = $"{usuario.Sigla} ({usuario.Descricao})";
          textValue = usuario.Id.ToString();
          ValidState();
        }
@@ -122,7 +123,7 @@
 
     private void Limpar()
     {
-        nomeUsuario = string.Empty;
+        nomeUnidadeMedida = string.Empty;
         textValue = null;
         ValidState();
     }
@@ -140,7 +141,7 @@
         StateHasChanged();
     }
 
-    public long GetValue() => textValue == "0" ? throw new Exception("Usuário inválido.") : long.Parse(textValue);
+    public long GetValue() => textValue == "0" ? throw new Exception("Unidade de medida inválido.") : long.Parse(textValue);
 
     public long? GetValueOrNull() => (string.IsNullOrWhiteSpace(textValue) || textValue == "0") ? null : (long?) GetValue();
 

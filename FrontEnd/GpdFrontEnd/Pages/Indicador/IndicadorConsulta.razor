@@ -1,5 +1,220 @@
 @page "/indicador-consulta"
-@using GpdFrontEnd.Components.Lookups.Usuario
+@inject GpdFrontEnd.Services.System.HttpService httpService
+@inject NotificationService notificationService
+@inject IJSRuntime js
+@inject NavigationManager navigation
 
+<nav class="navbar navbar-default navbar-fixed-top" style="height:56px; background-image: linear-gradient(180deg, #b0d2f7 100%, #007bff 0%); justify-content:center">
+    <button class="btn btn-primary" style="background-color: #007bff !important" @onclick="AdicionarIndicador"><span class="oi oi-plus"></span> Adicionar indicador</button>
+</nav>           
 
-<UsuarioLookup Label="Usuário responsável" PlaceHolder="Selecione um usuário" Value="1" Required="true"/>
+<div class="row" style="margin-top:10px"> 
+    <div class="col-md-8 mx-auto">
+        <div class="input-group">
+            <input @bind-value="filter" @bind-value:event="oninput" @onkeydown="KeyDownPesquisarAsync" class="form-control" type="search" placeholder="Digite aqui para pesquisar..." aria-label="Search" style="border-right: none;">
+            <div class="input-group-append">
+                <div @onclick="PesquisarAsync" class="input-group-text" style="background-color: #FFF"><span class="oi oi-magnifying-glass"></span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row" style="margin-top:20px"> 
+    <div class="col-md-10 mx-auto">
+        <DataTable @ref="dataTable" TItem="Indicador" Data="data" Count="count" Columns="columns" OnPaginate="OnPaginateAsync" OnEdit="OnEditIndicador" OnDelete="OnDeleteIndicadorAsync"/>
+    </div>
+</div>
+
+<Loader Visible="loaderVisible"/>
+
+@code 
+{
+    private DataTable<Indicador> dataTable;
+    private IList<Indicador> data;
+    private IList<DataTable<Indicador>.Column> columns;
+    private int count;
+    private string filter;
+    private int page = 0;
+    private bool loaderVisible;
+
+    private void AdicionarIndicador() => navigation.NavigateTo("/indicador-cadastro");
+
+    private async Task OnPaginateAsync(int page)
+    {
+        this.page = page;
+        await RefreshPageAsync();
+    }
+
+    private async Task RefreshPageAsync()
+    {
+        if ((filter?.Trim().Length ?? 0) < 3)
+        {
+            navigation.NavigateTo("/indicador-consulta", true);
+        }
+        else
+        {
+            await PesquisarAsync();
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        columns = new List<DataTable<Indicador>.Column>();
+        columns.Add(new DataTable<Indicador>.Column
+        {
+            PropertyName = "Identificador",
+            DisplayName = "Identificador"
+        });
+        columns.Add(new DataTable<Indicador>.Column
+        {
+            PropertyName = "Nome",
+            DisplayName = "Nome"
+        });
+        columns.Add(new DataTable<Indicador>.Column
+        {
+            PropertyName = "_Corporativo",
+            DisplayName = "Corporativo"
+        });
+        columns.Add(new DataTable<Indicador>.Column
+        {
+            PropertyName = "_TipoCalculo",
+            DisplayName = "Tipo de cálculo"
+        });
+        data = new List<Indicador>();
+    }
+
+    private async Task KeyDownPesquisarAsync(KeyboardEventArgs key)
+    {
+        if (key.Key.ToUpper() == "ENTER")
+        {
+            await PesquisarAsync();
+        }
+    }
+
+    private async Task PesquisarAsync()
+    {
+        if ((filter?.Trim().Length ?? 0) < 3)
+        {
+            notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Warning, Summary = "Alerta", Detail = "Insira no mínimo três (3) caracteres para pesquisar", Duration = 5000 });
+            return;
+        }
+
+        await BuscarIndicadorAsync();
+    }
+
+    private string GetFilter()
+    {
+        string filterAux = filter.Replace("\"", "'").Trim().TrimEnd('\\').ToUpper();
+
+        if (filterAux.Length < 3)
+        {
+            return "false";
+        }
+
+        string expression  = $"Identificador.Trim().ToUpper().Contains(\"{filterAux}\") || Nome.Trim().ToUpper().Contains(\"{filterAux}\")";
+        return System.Web.HttpUtility.UrlEncode(expression);
+    }
+
+    private async Task BuscarIndicadorAsync()
+    {
+        var http = await httpService.GetHttpAsync();
+        if (http != null)
+        {
+            SetVisibleLoader(true);
+            try
+            {
+                string expression = GetFilter();
+                var response = await http.GetAsync($"indicador?filter={expression}&page={page}&limit={dataTable.CountItemsInPage}");
+                if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
+                {
+                    throw new Exception(response.Content.ReadAsStringAsync().Result);
+                }
+
+                this.page = 0;
+                var result = await httpService.GetResultSetAsync<Indicador>(response);
+                data = result.Data;
+                count = result.Count; 
+            }
+            catch (Exception exc)
+            {
+                data = null;
+                count = 0;
+                Console.WriteLine(exc.Message);
+                notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = "Erro", Detail = "Um erro aconteceu ao realizar a pesquisa.", Duration = 5000 });
+            }
+            SetVisibleLoader(false);
+        }
+    }
+
+    private void SetVisibleLoader(bool visible)
+    {
+        loaderVisible = visible;
+        StateHasChanged();
+    }
+
+    private void OnEditIndicador(Indicador indicador)
+    {
+        navigation.NavigateTo($"/indicador-cadastro/{indicador.Id}");
+    }
+
+    private async Task OnDeleteIndicadorAsync(Indicador indicador)
+    {
+        var result = await js.InvokeAsync<bool>("confirm", "Tem certeza que deseja excluir este registro.");
+        if (result == true)
+        {
+            var http = await httpService.GetHttpAsync();
+            if (http != null)
+            {
+                SetVisibleLoader(true);
+                try
+                {
+                    var response = await http.DeleteAsync($"indicador?id={indicador.Id}");
+                    if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
+                    {
+                        throw new Exception(response.Content.ReadAsStringAsync().Result);
+                    }
+
+                    await RefreshPageAsync();
+                    notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = "Sucesso", Detail = "Registro excluído com sucesso.", Duration = 5000 });
+                }
+                catch (Exception exc)
+                {
+                    Console.WriteLine(exc.Message);
+                    notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = "Erro", Detail = "Um erro aconteceu ao excluir o registro.\nVerifique se este registro possui dependências.", Duration = 7000 });
+                }
+                SetVisibleLoader(false);
+            }
+        }    
+    }
+
+    class Indicador
+    {
+        public long Id {get; set;}
+
+        public string Identificador {get; set;}
+
+        public string Nome {get; set;}
+
+        public bool Corporativo {get; set;}
+
+        public string _Corporativo { get => Corporativo ? "Sim" : "Não"; }
+
+        public int TipoCalculo {get; set;}
+
+        public string _TipoCalculo 
+        {
+            get
+            {
+                switch(TipoCalculo)
+                {
+                    case 1: return "Não calculado";
+                    case 2: return "Somenta meta";
+                    case 3: return "Somenta realizado";
+                    case 4: return "Meta e realizado calculados";
+                    default: throw new Exception("Tipo de cálculo inválido.");
+                }
+            }
+        }
+    }
+}

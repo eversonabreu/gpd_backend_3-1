@@ -1,0 +1,358 @@
+@page "/indicador-cadastro"
+@page "/indicador-cadastro/{Id:long}"
+@inject GpdFrontEnd.Services.System.HttpService httpService
+@inject NotificationService notificationService
+@inject NavigationManager navigation
+@inject IJSRuntime js
+@using System.Text.Json
+@using  GpdFrontEnd.Components.Lookups.Usuario
+@using  GpdFrontEnd.Components.Lookups.UnidadeMedida
+
+<nav class="navbar navbar-default navbar-fixed-top" style="height:56px; background-image: linear-gradient(180deg, #b0d2f7 100%, #007bff 0%); justify-content:center">
+    <button @onclick="SalvarAsync" class="btn btn-success" style="width:120px; border-radius:0px"><span class="oi oi-circle-check"></span> Salvar</button>
+    &nbsp;&nbsp;
+    <button class="btn btn-default" @onclick="Cancelar" style="width:120px; border-radius:0px; border: 1px solid black; background-color:white"><span class="oi oi-circle-x"></span> Cancelar</button>
+    &nbsp;&nbsp;
+    <button hidden="@(!Id.HasValue)" class="btn btn-danger" @onclick="ExcluirAsync"><span class="oi oi-trash"></span> Excluir</button>
+</nav>
+
+<div class="card">
+    <div class="card-header"><h5>Formulário de cadastro de indicador (modo: @(Id.HasValue ? "visualização/edição" : "inserção"))</h5></div>
+    <div class="card-body">
+
+        <div class="row">
+            <div class="col-md-2">
+                <TextIndicador @ref="TxIdentificador" Required="true" Value="@indicador.Identificador"/>
+            </div>
+            <div class="col-md-4">
+                <Text @ref="TxNome" Label="Nome" PlaceHolder="insira o nome" MaxLength="255" Required="true" Value="@indicador.Nome"/>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                <label>Corporativo</label>
+                    <div class="input-group">
+                        <select class="form-control" @onchange="@(obj => indicador.Corporativo = Convert.ToBoolean(obj.Value))">
+                            @if (indicador.Corporativo)
+                            {
+                                <option value="true">Sim</option>
+                                <option value="false">Não</option>
+                            }
+                            else
+                            {
+                                <option value="false">Não</option>
+                                <option value="true">Sim</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <SelectOption @ref="SelTipoRemuneracao" Label="Tipo de remuneração" Required="true" AllowInvalidOption="true" Value="@indicador.TipoRemuneracao" Options="optionsTipoRemuneracao" />
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4">
+                <TextValue @ref="TxValorPercentualPeso" Label="Percentual de peso" Required="true" MinValue="0m" MaxValue="100m" Value="@indicador.ValorPercentualPeso" />
+            </div>
+            <div class="col-md-4">
+                <TextValue @ref="TxValorPercentualCriterio" Label="Percentual de critério" Required="true" MinValue="0m" MaxValue="100m" Value="@indicador.ValorPercentualCriterio" />
+            </div>
+            <div class="col-md-4">
+                <SelectOption @ref="SelTipoPeriodicidade" Label="Tipo de periodicidade" Required="true" AllowInvalidOption="true" Value="@indicador.TipoPeriodicidade" Options="optionsTipoPeriodicidade" />
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <UnidadeMedidaLookup @ref="LkpUnidadeMedida" PlaceHolder="Selecione uma unidade de medida" Label="Unidade de medida" Required="true" Value="@indicador.IdUnidadeMedida" />
+            </div>
+            <div class="col-md-6">
+                <UsuarioLookup @ref="LkpUsuario" Label="Responsável" PlaceHolder="Selecione um usuário" Required="false" Value="@indicador.IdUsuarioResponsavel" />
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label>Acumula meta</label>
+                    <div class="input-group">
+                        <select class="form-control" @onchange="@(obj => indicador.AcumulaMeta = Convert.ToBoolean(obj.Value))">
+                            @if (indicador.AcumulaMeta)
+                            {
+                                <option value="true">Sim</option>
+                                <option value="false">Não</option>
+                            }
+                            else
+                            {
+                                <option value="false">Não</option>
+                                <option value="true">Sim</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label>Acumula realizado</label>
+                    <div class="input-group">
+                        <select class="form-control" @onchange="@(obj => indicador.AcumulaRealizado = Convert.ToBoolean(obj.Value))">
+                            @if (indicador.AcumulaRealizado)
+                            {
+                                <option value="true">Sim</option>
+                                <option value="false">Não</option>
+                            }
+                            else
+                            {
+                                <option value="false">Não</option>
+                                <option value="true">Sim</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label>Possui cardinalidade</label>
+                    <div class="input-group">
+                        <select class="form-control" @onchange="@(obj => indicador.PossuiCardinalidade = Convert.ToBoolean(obj.Value))">
+                            @if (indicador.PossuiCardinalidade)
+                            {
+                                <option value="true">Sim</option>
+                                <option value="false">Não</option>
+                            }
+                            else
+                            {
+                                <option value="false">Não</option>
+                                <option value="true">Sim</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <SelectOption @ref="SelTipoCalculo" Label="Tipo de cálculo" Required="true" AllowInvalidOption="true" Value="@indicador.TipoCalculo" Options="optionsTipoCalculo" />
+            </div>
+
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <Text @ref="TxObservacao" Label="Observações" Multiple="true" Required="false" MaxLength="10000" Value="@indicador.Observacao" />
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<Loader Visible="loaderVisible"/>
+
+@code
+{
+    [Parameter]
+    public long? Id { get; set; }
+
+    private Indicador indicador;
+    private bool loaderVisible;
+    private Dictionary<long, string> optionsTipoRemuneracao;
+    private Dictionary<long, string> optionsTipoPeriodicidade;
+    private Dictionary<long, string> optionsTipoCalculo;
+
+    protected override void OnInitialized()
+    {
+        indicador = new Indicador();
+
+        optionsTipoRemuneracao = new Dictionary<long, string>();
+        optionsTipoRemuneracao.Add(1, "Não remunerado");
+        optionsTipoRemuneracao.Add(2, "Anual");
+        optionsTipoRemuneracao.Add(3, "Mensal");
+        optionsTipoRemuneracao.Add(4, "Diário");
+
+        optionsTipoPeriodicidade = new Dictionary<long, string>();
+        optionsTipoPeriodicidade.Add(1, "Diário");
+        optionsTipoPeriodicidade.Add(2, "Mensal");
+        optionsTipoPeriodicidade.Add(3, "Anual");
+
+        optionsTipoCalculo = new Dictionary<long, string>();
+        optionsTipoCalculo.Add(1, "Não calculado");
+        optionsTipoCalculo.Add(2, "Somente meta");
+        optionsTipoCalculo.Add(3, "Somente realizado");
+        optionsTipoCalculo.Add(4, "Meta e realizado calculado");
+
+        base.OnInitialized();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender) 
+    {
+        if (firstRender)
+        {
+            if (Id.HasValue)
+            {
+                var http = await httpService.GetHttpAsync();
+                if (http != null)
+                {
+                    SetVisibleLoader(true);
+                    try
+                    {
+                        var response = await http.GetAsync($"indicador/id/{Id}");
+                        var content = await response.Content.ReadAsStringAsync();
+                        indicador = JsonSerializer.Deserialize<Indicador>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    }
+                    catch (Exception exc)
+                    {
+                        Console.WriteLine(exc.Message);
+                        notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = "Erro", Detail = "Um erro aconteceu ao carregar o registro.", Duration = 7000 });
+                    }
+                    SetVisibleLoader(false);
+                }
+
+                await LkpUnidadeMedida.BuscarUnidadeMedidaAsync();
+            }
+        }
+    }
+
+    private async Task ExcluirAsync()
+    {
+        var result = await js.InvokeAsync<bool>("confirm", "Tem certeza que deseja excluir este registro.");
+        if (result == true)
+        {
+            var http = await httpService.GetHttpAsync();
+            if (http != null)
+            {
+                SetVisibleLoader(true);
+                try
+                {
+                    var response = await http.DeleteAsync($"indicador?id={Id}");
+                    if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
+                    {
+                        throw new Exception(response.Content.ReadAsStringAsync().Result);
+                    }
+
+                    Cancelar();
+                    notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = "Sucesso", Detail = "Registro excluído com sucesso.", Duration = 5000 });
+                }
+                catch (Exception exc)
+                {
+                    Console.WriteLine(exc.Message);
+                    notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = "Erro", Detail = "Um erro aconteceu ao excluir o registro.\nVerifique se este registro possui dependências.", Duration = 7000 });
+                }
+                SetVisibleLoader(false);
+            }
+        } 
+    }
+
+    private void Cancelar()
+    {
+        navigation.NavigateTo("/indicador-consulta");
+    }
+
+    private async Task SalvarAsync()
+    {
+        bool formularioValido = TxIdentificador.Valid && TxNome.Valid && TxValorPercentualPeso.Valid && TxValorPercentualCriterio.Valid
+           && SelTipoCalculo.Valid && SelTipoPeriodicidade.Valid && SelTipoRemuneracao.Valid && LkpUnidadeMedida.Valid;
+        if (formularioValido)
+        {
+            var http = await httpService.GetHttpAsync();
+            if (http != null)
+            {
+                SetVisibleLoader(true);
+                try
+                {
+                    HttpResponseMessage response; 
+                    indicador.Id = Id;
+                    indicador.Identificador = TxIdentificador.GetValue();
+                    indicador.Nome = TxNome.GetValue();
+                    indicador.ValorPercentualPeso = TxValorPercentualPeso.GetValue();
+                    indicador.ValorPercentualCriterio = TxValorPercentualCriterio.GetValue();
+                    indicador.TipoRemuneracao = (int) SelTipoRemuneracao.GetValue();
+                    indicador.TipoPeriodicidade = (int) SelTipoPeriodicidade.GetValue();
+                    indicador.IdUnidadeMedida = LkpUnidadeMedida.GetValue();
+                    indicador.IdUsuarioResponsavel = LkpUsuario.GetValueOrNull();
+                    indicador.Observacao = TxObservacao.GetValueOrNull();
+                    indicador.TipoCalculo = (int) SelTipoCalculo.GetValue();
+
+                    string message;
+                    if (indicador.Id.HasValue)
+                    {
+                        response = await http.PutAsJsonAsync("indicador", indicador);
+                        message = "Registro atualizado com sucesso";
+                    }
+                    else
+                    {
+                        response = await http.PostAsJsonAsync("indicador", indicador);
+                        message = "Registro inserido com sucesso.";
+                    }
+
+                    if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
+                    {
+                        throw new Exception(response.Content.ReadAsStringAsync().Result);
+                    }
+                    else if (!Id.HasValue)
+                    {
+                        Id = long.Parse(response.Content.ReadAsStringAsync().Result);
+                    }
+
+                    notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = "Sucesso", Detail = message, Duration = 6000 });
+                }
+                catch (Exception exc)
+                {
+                    Console.WriteLine(exc.Message);
+
+                    if (exc.Message.Contains("UkIndicador"))
+                    {
+                        notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Warning, Summary = "Alerta", Detail = "Este identificador já está sendo utilizado em outro registro.", Duration = 5000 });
+                    }
+                    else
+                    {
+                        notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = "Erro", Detail = "Um erro aconteceu ao salvar os dados.", Duration = 5000 });
+                    }
+                }
+                SetVisibleLoader(false);
+            }
+        }
+        else
+        {
+            notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Warning, Summary = "Alerta", Detail = "Existem campos que precisam ser informados ou corrigidos", Duration = 5000 });
+        }
+    }
+
+    private void SetVisibleLoader(bool visible)
+    {
+        loaderVisible = visible;
+        StateHasChanged();
+    }
+
+    private TextIndicador TxIdentificador;
+    private Text TxNome;
+    private TextValue TxValorPercentualPeso;
+    private TextValue TxValorPercentualCriterio;
+    private SelectOption SelTipoRemuneracao;
+    private SelectOption SelTipoPeriodicidade;
+    private UnidadeMedidaLookup LkpUnidadeMedida;
+    private UsuarioLookup LkpUsuario;
+    private Text TxObservacao;
+    private SelectOption SelTipoCalculo;
+
+    public class Indicador
+    {
+        public long? Id {get; set;}
+        public string Identificador {get; set;}
+        public string Nome {get; set;}
+        public decimal ValorPercentualPeso {get; set;}
+        public decimal ValorPercentualCriterio {get; set;}
+        public int TipoRemuneracao {get; set;}
+        public int TipoPeriodicidade {get; set;}
+        public long IdUnidadeMedida {get; set;}
+        public bool Corporativo {get; set;}
+        public long? IdUsuarioResponsavel {get; set;}
+        public string Formula {get; set;}
+        public string Observacao {get; set;}
+        public bool AcumulaMeta {get; set;}
+        public bool AcumulaRealizado {get; set;}
+        public bool PossuiCardinalidade {get; set;}
+        public int TipoCalculo {get; set;}
+    }
+}

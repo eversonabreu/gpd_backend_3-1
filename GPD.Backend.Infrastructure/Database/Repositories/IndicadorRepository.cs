@@ -2,6 +2,7 @@
 using GPD.Backend.Domain.Exceptions;
 using GPD.Backend.Domain.Repositories;
 using GPD.Backend.Infrastructure.Database.Repositories.Base;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -34,13 +35,30 @@ namespace GPD.Backend.Infrastructure.Database.Repositories
         {
 			if (oldValue.Identificador != newValue.Identificador && oldValue.TipoCalculo == TipoCalculo.NaoCalculado)
 			{
-				string termoPesquisa = $"[{newValue.Identificador}]";
-				var results = Filter(item => item.TipoCalculo != TipoCalculo.NaoCalculado && item.Formula.Contains(termoPesquisa));
-				if (results?.Any())
-				{
-					
-				}
-			}
+                Exception excSql = null;
+				string termoPesquisa = $"[{oldValue.Identificador}]";
+                string novoIdentificador = $"[{newValue.Identificador}]";
+                using var connection = new Microsoft.Data.SqlClient.SqlConnection(databaseContext.Database.GetDbConnection().ConnectionString);
+                connection.Open();
+                var transaction = connection.BeginTransaction();
+                string sqlUpdate = $"update Indicador set Formula = replace(Formula, '{termoPesquisa}', '{novoIdentificador}') where TipoCalculo <> 1 and Formula like '%{termoPesquisa}%'";
+                using (var command = new Microsoft.Data.SqlClient.SqlCommand(sqlUpdate, connection, transaction))
+                {
+                    try
+                    {
+                        command.ExecuteNonQuery();
+                        transaction.Commit();
+                    }
+                    catch (Exception exc)
+                    {
+                        excSql = exc;
+                        transaction.Rollback();
+                    }
+                }
+
+                connection.Close();
+                if (excSql != null) throw excSql;
+            }
 			
             if (oldValue.Corporativo && !newValue.Corporativo)
             {

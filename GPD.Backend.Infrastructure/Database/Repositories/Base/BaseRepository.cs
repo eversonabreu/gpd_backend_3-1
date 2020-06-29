@@ -18,7 +18,7 @@ namespace GPD.Backend.Infrastructure.Database.Repositories.Base
     public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : Entity 
     {
         private readonly IServiceProvider serviceProvider;
-        private readonly DatabaseContext databaseContext;
+        protected readonly DatabaseContext databaseContext;
         private readonly DbSet<TEntity> dbSet;
 
         public BaseRepository(IServiceProvider serviceProvider)

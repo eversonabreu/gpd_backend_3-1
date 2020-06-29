@@ -1,0 +1,96 @@
+<div class="form-group">
+    <label>Identificador</label>
+    <div class="input-group">
+        <input type="text" class="form-control" @bind-value="textValue" maxlength="30"
+                @bind-value:event="oninput" style="text-transform: uppercase; border: 1px solid @(Valid ? "#ced4da" : "#F7819F"); background-color: @(Valid ? "white" : "#F6CED8")"
+                @onblur="Leave" onpaste="return false" @onkeydown="KeyDown" @onkeydown:preventDefault="blockChar" @onkeydown:stopPropagation="blockChar" 
+                readonly="@ReadOnly" disabled="@Disabled" />
+    </div>
+    <small class="form-text text-muted" style="color:red !important" hidden="@Valid">@message</small>
+</div>
+
+    @code {
+
+        private bool blockChar;
+        private string oldValue;
+        private string textValue = string.Empty;
+
+        [Parameter]
+        public string Value
+        {
+            set
+            {
+                if (value != null && oldValue != OldValue(value))
+                {
+                    textValue = value;
+                    oldValue = textValue;
+                    ValidState();
+                }
+            }
+        }
+
+        private string OldValue(string value)
+        {
+            if (value != null)
+            {
+                return value;
+            }
+
+            return string.Empty;
+        }
+
+        [Parameter]
+        public bool Required { get; set; }
+
+        public bool Valid { get; private set; }
+
+        [Parameter]
+        public bool ReadOnly { get; set; }
+
+        [Parameter]
+        public bool Disabled { get; set; }
+
+        private string message;
+
+        public string GetValue() => textValue;
+
+        public string GetValueOrNull() => (textValue ?? string.Empty).Trim() == string.Empty ? null : textValue;
+
+        private void Leave() => ValidState();
+
+        private void KeyDown(KeyboardEventArgs eventArgs)
+        {
+            blockChar = false;
+
+            if (Disabled || ReadOnly)
+            {
+                return;
+            }
+
+            blockChar = !(eventArgs.Key == "Backspace" || eventArgs.Key == "-" || char.IsLetterOrDigit(eventArgs.Key[0]));
+            Leave();
+        }
+
+        private void ValidState()
+        {
+            Valid = true;
+
+            if (Required && string.IsNullOrWhiteSpace(textValue))
+            {
+                Valid = false;
+                message = "Este campo deve ser informado obrigatóriamente.";
+            }
+
+            StateHasChanged();
+        }
+
+        protected override void OnAfterRender(bool firstRender)
+        {
+            if (firstRender)
+            {
+                ValidState();
+            }
+
+            base.OnAfterRender(firstRender);
+        }
+    }

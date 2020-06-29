@@ -29,7 +29,7 @@ namespace GpdFrontEnd.Infraestructure
 
             return result;
         }
-    
+
         public async Task<User> GetUserAsync(string page = null)
         {
             string dataUser = await sessionStorage.GetItemAsync<string>("V_USER");
