@@ -39,6 +39,7 @@ namespace GPD.Backend.Domain.IoC
             services.AddTransient<ILoginService, LoginService>();
             services.AddTransient<IIndicadorLancamentosService, IndicadorLancamentosService>();
             services.AddTransient<IEmailService, EmailService>();
+            services.AddTransient<IProjetoEstruturaOrganizacionalService, ProjetoEstruturaOrganizacionalService>();
         }
     }
 }

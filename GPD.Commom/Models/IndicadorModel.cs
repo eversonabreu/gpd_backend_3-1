@@ -14,9 +14,6 @@ namespace GPD.Commom.Models
         [StringLength(maximumLength: IndicadorConsts.TamanhoColunaNome, ErrorMessage = "O nome do indicador não pode conter mais que 255 caracteres.")]
         public string Nome { get; set; }
 
-        [Range(minimum: 1, maximum: short.MaxValue, ErrorMessage = "O campo 'ordem' não possui um valor válido.")]
-        public short? Ordem { get; set; }
-
         [Required(ErrorMessage = "O campo 'Valor percentual do peso' é obrigatório.")]
         [Range(type: typeof(decimal), minimum: "0", maximum: "100", ErrorMessage = "O campo 'Valor percentual do peso' deve possuir um valor entre '0,00' e '100,00'.")]
         public decimal ValorPercentualPeso { get; set; }

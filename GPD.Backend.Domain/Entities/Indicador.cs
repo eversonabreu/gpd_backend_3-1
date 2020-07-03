@@ -46,8 +46,6 @@ namespace GPD.Backend.Domain.Entities
 
         public string Nome { get; set; }
 
-        public short? Ordem { get; set; }
-
         public decimal ValorPercentualPeso { get; set; }
 
         public decimal ValorPercentualCriterio { get; set; }

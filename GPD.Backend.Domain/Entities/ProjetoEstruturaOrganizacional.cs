@@ -45,6 +45,8 @@ namespace GPD.Backend.Domain.Entities
         [LoadEntity(NameForeignKey = nameof(IdIndicador), TypeRepository = typeof(IIndicadorRepository))]
         public Indicador Indicador { get; set; }
 
+        public short Ordem { get; set; }
+
         public ICollection<ProjetoEstruturaOrganizacional> ProjetoEstruturasOrganizacionais { get; set; }
     }
 }

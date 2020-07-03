@@ -20,7 +20,8 @@ namespace GPD.Backend.Infrastructure.Database.Repositories
             projetoEstruturaOrganizacionalRepository.Add(new ProjetoEstruturaOrganizacional
             {
                 IdProjeto = entity.Id,
-                Tipo = TipoProjetoEstruturaOrganizacional.Projeto
+                Tipo = TipoProjetoEstruturaOrganizacional.Projeto,
+                Ordem = 1
             });
         }
     }

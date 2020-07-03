@@ -25,5 +25,7 @@ namespace GPD.Commom.Models
 
         [Range(minimum: 1, maximum: long.MaxValue, ErrorMessage = "O id do indicador é inválido.")]
         public long? IdIndicador { get; set; }
+
+        public short Ordem { get; set; }
     }
 }

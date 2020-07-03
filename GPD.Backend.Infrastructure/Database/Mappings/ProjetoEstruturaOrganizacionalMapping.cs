@@ -13,6 +13,7 @@ namespace GPD.Backend.Infrastructure.Database.Mappings
             builder.Property(bld => bld.Id).IsRequired();
             builder.Property(bld => bld.IdProjeto).IsRequired();
             builder.Property(bld => bld.Tipo).IsRequired();
+            builder.Property(bld => bld.Ordem).IsRequired().HasDefaultValue(1);
             builder.Property(bld => bld.IdNivelOrganizacional);
             builder.Property(bld => bld.IdUsuario);
             builder.Property(bld => bld.IdIndicador);

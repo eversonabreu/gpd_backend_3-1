@@ -14,7 +14,6 @@ namespace GPD.Backend.Infrastructure.Database.Mappings
             builder.Property(bld => bld.Id).IsRequired();
             builder.Property(bld => bld.Nome).HasMaxLength(IndicadorConsts.TamanhoColunaNome).IsRequired();
 			builder.Property(bld => bld.Identificador).HasMaxLength(IndicadorConsts.TamanhoColunaIdentificador).IsRequired();
-            builder.Property(bld => bld.Ordem);
             builder.Property(bld => bld.ValorPercentualPeso).HasColumnType("decimal(5, 2)").IsRequired();
             builder.Property(bld => bld.ValorPercentualCriterio).HasColumnType("decimal(5, 2)").IsRequired();
             builder.Property(bld => bld.TipoCalculo).IsRequired();
