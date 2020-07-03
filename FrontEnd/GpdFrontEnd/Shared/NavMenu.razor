@@ -1,4 +1,20 @@
-﻿<div class="top-row pl-4 navbar navbar-dark" style="text-align:center;@(mostrarMenu ? "padding-left: 5px !important; padding-right: 6px !important" : null)">
+﻿@if (string.IsNullOrEmpty(codigoMenu))
+{
+    <style>
+        .sidebar-out {
+        }
+    </style>
+}
+else
+{
+    <style>
+        .sidebar-out {
+            min-width: 290px !important;
+        }
+    </style>
+}
+
+<div class="top-row pl-4 navbar navbar-dark" style="text-align:center;@(mostrarMenu ? "padding-left: 5px !important; padding-right: 6px !important" : null)">
     <div class="pcssc-popover">
         <div tabindex="0" class="pure-button popover-toggle popover-toggle-dismissable popover-dismissable-right">
             <div style="margin-top:-2px;width:47px;height:45px;border-radius:50%;border: 2px solid #007bf7" @onclick="@(() => mostrarMenu = false)">
@@ -126,7 +142,7 @@
 
                 <ul class="nav flex-column">
                     <li class="nav-item px-3" style="padding-top: 5px; padding-bottom: 0px">
-                        <NavLink class="nav-link" href="estrutura-organizacional">
+                        <NavLink class="nav-link" href="projeto-estrutura-organizacional">
                             <span class="oi oi-layers" aria-hidden="true"></span> Estrutura Organizacional
                         </NavLink>
                     </li>
@@ -188,7 +204,6 @@
         }
     </button>
 </div>
-
 
 @code {
     private bool collapseNavMenu = true;

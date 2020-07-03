@@ -5,7 +5,7 @@
 
 <BlazoredModal />
 
-<div class="sidebar" style="width: auto; background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #007bff 100%)">
+<div class="sidebar sidebar-out" style="width: auto; background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #007bff 100%)">
     <NavMenu />
 </div>
 
@@ -57,6 +57,11 @@
         {
             conteudo = "Cadastro de indicador";
         }
+        else if (uri.StartsWith("projeto-estrutura-organizacional"))
+        {
+            conteudo = "Cadastro de estrutura organizacional de projeto";
+            padding = "padding: 0 !important;";
+        }
 
         if (conteudo != null)
         {
@@ -68,15 +73,22 @@
         }
     }
 
-    <div class="content px-4">
+    <div class="content px-4" style="@padding">
         @Body
     </div>
 </div>
 
 @code
 {
+    private string padding;
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (firstRender)
+        {
+            padding = null;
+        }
+        
         await session.GetTokenAsync();
         await base.OnAfterRenderAsync(firstRender);
     }

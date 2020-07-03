@@ -121,7 +121,6 @@
             {
                 string expression = GetFilter();
                 var response = await http.GetAsync($"nivel-organizacional?filter={expression}&page={page}&limit={dataTable.CountItemsInPage}");
-                Console.WriteLine(response.Content.ReadAsStringAsync().Result);
                 if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
                 {
                     throw new Exception(response.Content.ReadAsStringAsync().Result);

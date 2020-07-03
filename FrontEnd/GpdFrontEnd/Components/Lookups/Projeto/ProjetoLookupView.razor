@@ -1,15 +1,15 @@
-@page "/projeto-consulta"
+<style>
+    .blazored-modal {
+        width: 80vw !important;
+    }
+</style>
+
 @inject GpdFrontEnd.Services.System.HttpService httpService
 @inject NotificationService notificationService
-@inject IJSRuntime js
-@inject NavigationManager navigation
-
-<nav class="navbar navbar-default navbar-fixed-top" style="height:56px; background-image: linear-gradient(180deg, #b0d2f7 100%, #007bff 0%); justify-content:center">
-    <button class="btn btn-primary" style="background-color: #007bff !important" @onclick="AdicionarProjeto"><span class="oi oi-plus"></span> Adicionar projeto</button>
-</nav>           
+@inject IModalService ModalService
 
 <div class="row" style="margin-top:10px"> 
-    <div class="col-md-8 mx-auto">
+    <div class="col-md-12">
         <div class="input-group">
             <input @bind-value="filter" @bind-value:event="oninput" @onkeydown="KeyDownPesquisarAsync" class="form-control" type="search" placeholder="Digite aqui para pesquisar..." aria-label="Search" style="border-right: none;">
             <div class="input-group-append">
@@ -20,8 +20,14 @@
 </div>
 
 <div class="row" style="margin-top:20px"> 
-    <div class="col-md-10 mx-auto">
-        <DataTable @ref="dataTable" TItem="Projeto" Data="data" Count="count" Columns="columns" OnPaginate="OnPaginateAsync" OnEdit="OnEditProjeto" OnDelete="OnDeleteProjetoAsync"/>
+    <div class="col-md-12">
+        <DataTable @ref="dataTable" TItem="ProjetoLookupClass" Data="data" Count="count" Columns="columns" OnPaginate="OnPaginateAsync" OnSelect="OnSelectAsync" />
+    </div>
+</div>
+
+<div class="row" style="margin-top:10px">
+    <div class="col-md-12">
+        <button class="btn btn-default" @onclick="@(() => BlazoredModal.Close(ModalResult.Cancel()))" style="width:120px; border-radius:0px; border: 1px solid black; background-color:white; float:right"><span class="oi oi-circle-x"></span> Cancelar</button>
     </div>
 </div>
 
@@ -29,15 +35,17 @@
 
 @code 
 {
-    private DataTable<Projeto> dataTable;
-    private IList<Projeto> data;
-    private IList<DataTable<Projeto>.Column> columns;
+    [CascadingParameter] 
+    public BlazoredModalInstance BlazoredModal { get; set; }
+
+    private DataTable<ProjetoLookupClass> dataTable;
+    private IList<ProjetoLookupClass> data;
+    private IList<DataTable<ProjetoLookupClass>.Column> columns;
     private int count;
     private string filter;
+    private string oldFilter;
     private int page = 0;
     private bool loaderVisible;
-
-    private void AdicionarProjeto() => navigation.NavigateTo("/projeto-cadastro");
 
     private async Task OnPaginateAsync(int page)
     {
@@ -45,43 +53,42 @@
         await RefreshPageAsync();
     }
 
+    private async Task OnSelectAsync(ProjetoLookupClass projeto)
+    {
+        BlazoredModal.Close(ModalResult.Ok<ProjetoLookupClass>(projeto));
+        await Task.CompletedTask;
+    }
+
     private async Task RefreshPageAsync()
     {
         if ((filter?.Trim().Length ?? 0) < 3)
         {
-            navigation.NavigateTo("/projeto-consulta", true);
+            filter = oldFilter;
         }
-        else
-        {
-            await PesquisarAsync();
-        }
+
+        await PesquisarAsync();
     }
 
     protected override void OnInitialized()
     {
         base.OnInitialized();
-        columns = new List<DataTable<Projeto>.Column>();
-        columns.Add(new DataTable<Projeto>.Column
+        columns = new List<DataTable<ProjetoLookupClass>.Column>();
+        columns.Add(new DataTable<ProjetoLookupClass>.Column
         {
             PropertyName = "Nome",
             DisplayName = "Nome"
         });
-        columns.Add(new DataTable<Projeto>.Column
+        columns.Add(new DataTable<ProjetoLookupClass>.Column
         {
             PropertyName = "_DataInicio",
             DisplayName = "DataInicio"
         });
-        columns.Add(new DataTable<Projeto>.Column
+        columns.Add(new DataTable<ProjetoLookupClass>.Column
         {
             PropertyName = "_DataTermino",
             DisplayName = "DataTermino"
         });
-        columns.Add(new DataTable<Projeto>.Column
-        {
-            PropertyName = "_Ativo",
-            DisplayName = "Ativo"
-        });
-        data = new List<Projeto>();
+        data = new List<ProjetoLookupClass>();
     }
 
     private async Task KeyDownPesquisarAsync(KeyboardEventArgs key)
@@ -89,6 +96,7 @@
         if (key.Key.ToUpper() == "ENTER")
         {
             await PesquisarAsync();
+            oldFilter = new string(filter.ToArray());
         }
     }
 
@@ -119,6 +127,7 @@
             expression = expression + $" || (DataInicio >= DateTime.Parse(\"{dateStr}\") && DataTermino <= DateTime.Parse(\"{dateStr}\"))";
         }
 
+        expression = $"Ativo == true && ({expression})";
         return System.Web.HttpUtility.UrlEncode(expression);
     }
 
@@ -138,7 +147,7 @@
                 }
 
                 this.page = 0;
-                var result = await httpService.GetResultSetAsync<Projeto>(response);
+                var result = await httpService.GetResultSetAsync<ProjetoLookupClass>(response);
                 data = result.Data;
                 count = result.Count; 
             }
@@ -159,42 +168,7 @@
         StateHasChanged();
     }
 
-    private void OnEditProjeto(Projeto projeto)
-    {
-        navigation.NavigateTo($"/projeto-cadastro/{projeto.Id}");
-    }
-
-    private async Task OnDeleteProjetoAsync(Projeto projeto)
-    {
-        var result = await js.InvokeAsync<bool>("confirm", "Tem certeza que deseja excluir este registro.");
-        if (result == true)
-        {
-            var http = await httpService.GetHttpAsync();
-            if (http != null)
-            {
-                SetVisibleLoader(true);
-                try
-                {
-                    var response = await http.DeleteAsync($"projeto?id={projeto.Id}");
-                    if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
-                    {
-                        throw new Exception(response.Content.ReadAsStringAsync().Result);
-                    }
-
-                    await RefreshPageAsync();
-                    notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = "Sucesso", Detail = "Registro excluído com sucesso.", Duration = 5000 });
-                }
-                catch (Exception exc)
-                {
-                    Console.WriteLine(exc.Message);
-                    notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = "Erro", Detail = "Um erro aconteceu ao excluir o registro.\nVerifique se este registro possui dependências.", Duration = 7000 });
-                }
-                SetVisibleLoader(false);
-            }
-        }    
-    }
-
-    class Projeto
+    public class ProjetoLookupClass
     {
         public long Id {get; set;}
 
@@ -202,15 +176,22 @@
 
         public DateTime DataInicio {get; set;}
 
-        public string _DataInicio { get => DataInicio.ToString("dd/MM/yyyy"); }
+        public string _DataInicio
+        {
+            get
+            {
+                return DataInicio.ToString("dd/MM/yyyy");
+            }
+        }
 
         public DateTime DataTermino {get; set;}
 
-        public string _DataTermino { get => DataTermino.ToString("dd/MM/yyyy"); }
-
-        public bool Ativo {get; set;}
-
-        public string _Ativo { get => Ativo ? "Sim" : "Não"; }
+        public string _DataTermino
+        {
+            get
+            {
+                return DataTermino.ToString("dd/MM/yyyy");
+            }
+        }
     }
 }
-

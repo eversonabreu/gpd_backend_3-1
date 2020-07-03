@@ -1,5 +1,4 @@
 ﻿using GpdFrontEnd.Infraestructure;
-using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Text.Json;
@@ -35,6 +34,13 @@ namespace GpdFrontEnd.Services.System
         {
             var content = await response.Content.ReadAsStringAsync();
             var result = JsonSerializer.Deserialize<ResultSet<TResult>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = propertyNameCaseInsensitive });
+            return result;
+        }
+
+        public async Task<TResult> GetObjectAsync<TResult>(HttpResponseMessage response, bool propertyNameCaseInsensitive = true)
+        {
+            var content = await response.Content.ReadAsStringAsync();
+            var result = JsonSerializer.Deserialize<TResult>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = propertyNameCaseInsensitive });
             return result;
         }
     }
