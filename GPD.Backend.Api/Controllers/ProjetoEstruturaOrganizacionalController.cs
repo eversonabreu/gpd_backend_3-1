@@ -7,6 +7,7 @@ using GPD.Commom.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace GPD.Backend.Api.Controllers
 {
@@ -15,6 +16,7 @@ namespace GPD.Backend.Api.Controllers
     {
         private readonly IProjetoEstruturaOrganizacionalService projetoEstruturaOrganizacionalService;
         private readonly IIndicadorRepository indicadorRepository;
+        private readonly IProjetoEstruturaOrganizacionalRepository projetoEstruturaOrganizacionalRepository;
 
         public ProjetoEstruturaOrganizacionalController(IProjetoEstruturaOrganizacionalRepository projetoEstruturaOrganizacionalRepository,
             IHttpContextAccessor httpContextAccessor,
@@ -23,6 +25,7 @@ namespace GPD.Backend.Api.Controllers
         {
             this.projetoEstruturaOrganizacionalService = projetoEstruturaOrganizacionalService;
             this.indicadorRepository = indicadorRepository;
+            this.projetoEstruturaOrganizacionalRepository = projetoEstruturaOrganizacionalRepository;
         }
 
         [Route("obter-arvore/{idProjeto:long}"), HttpGet]
@@ -38,5 +41,69 @@ namespace GPD.Backend.Api.Controllers
             //System.Diagnostics.Debugger.Launch();
             return indicadorRepository.ObterIndicadoresCorporativos(idProjeto);
         }
+
+        [Route("exclui-item/{id:long}/{idSuperior:long}/{idProjeto:long}"), HttpGet]
+        public IEnumerable<ProjetoEstruturaOrganizacionalArvore> ExcluirItem(long id, long idSuperior, long idProjeto)
+        {
+            //System.Diagnostics.Debugger.Launch();
+            projetoEstruturaOrganizacionalRepository.DeleteById(id);
+            //return projetoEstruturaOrganizacionalService.ObterArvore(idProjeto, idSuperior);
+            return new List<ProjetoEstruturaOrganizacionalArvore>();
+        }
+
+        [Route("avancar-nivel/{id:long}/{idSuperior:long}/{idProjeto:long}"), HttpGet]
+        public IEnumerable<ProjetoEstruturaOrganizacionalArvore> AvancarNivel(long id, long idSuperior, long idProjeto)
+        {
+            projetoEstruturaOrganizacionalRepository.AvancarNivel(id, idSuperior);
+            //return projetoEstruturaOrganizacionalService.ObterArvore(idProjeto, id);
+            return new List<ProjetoEstruturaOrganizacionalArvore>();
+        }
+
+        [Route("retroceder-nivel/{id:long}/{idSuperior:long}/{idProjeto:long}"), HttpGet]
+        public IEnumerable<ProjetoEstruturaOrganizacionalArvore> RetrocederNivel(long id, long idSuperior, long idProjeto)
+        {
+            projetoEstruturaOrganizacionalRepository.RetrocederNivel(id, idSuperior);
+            //return projetoEstruturaOrganizacionalService.ObterArvore(idProjeto, id);
+            return new List<ProjetoEstruturaOrganizacionalArvore>();
+        }
+
+        [Route("adicionar-item"), HttpPost]
+        public void AdicionarItem([FromBody] ArvoreAddUpdate arvore)
+        {
+            int ordem = projetoEstruturaOrganizacionalRepository.Filter(item => item.IdSuperior == arvore.IdSuperior).Max(it => it.Ordem) + 1;
+            var projetoEstruturaOrganizacionalReferencia = new ProjetoEstruturaOrganizacional();
+
+            if (arvore.Tipo == 3 || arvore.Tipo == 4 || arvore.Tipo == 5)
+            {
+                projetoEstruturaOrganizacionalReferencia.IdNivelOrganizacional = arvore.IdReferencia;
+            }
+            else if (arvore.Tipo == 6)
+            {
+                projetoEstruturaOrganizacionalReferencia.IdUsuario = arvore.IdReferencia;
+            }
+            else
+            {
+                projetoEstruturaOrganizacionalReferencia.IdIndicador = arvore.IdReferencia;
+            }
+
+            projetoEstruturaOrganizacionalReferencia.Ordem = (short) ordem;
+            projetoEstruturaOrganizacionalReferencia.Tipo = (TipoProjetoEstruturaOrganizacional) arvore.Tipo;
+            projetoEstruturaOrganizacionalReferencia.IdSuperior = arvore.IdSuperior;
+            projetoEstruturaOrganizacionalReferencia.IdProjeto = arvore.IdProjeto;
+            projetoEstruturaOrganizacionalRepository.Add(projetoEstruturaOrganizacionalReferencia);
+        }
+    }
+
+    public class ArvoreAddUpdate
+    {
+        public long? Id { get; set; }
+
+        public long IdProjeto { get; set; }
+
+        public int Tipo { get; set; }
+
+        public long IdReferencia { get; set; }
+
+        public long IdSuperior { get; set; }
     }
 }

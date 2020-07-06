@@ -5,6 +5,6 @@ namespace GPD.Backend.Domain.Services.Contracts
 {
     public interface IProjetoEstruturaOrganizacionalService
     {
-        IList<ProjetoEstruturaOrganizacionalArvore> ObterArvore(long idProjeto);
+        IList<ProjetoEstruturaOrganizacionalArvore> ObterArvore(long idProjeto, long? idSelected = null, bool montagemArvore = true);
     }
 }

@@ -26,7 +26,7 @@ namespace GPD.Backend.Domain.Services.Implementations
             this.usuarioRepository = usuarioRepository;
         }
 
-        public IList<ProjetoEstruturaOrganizacionalArvore> ObterArvore(long idProjeto)
+        public IList<ProjetoEstruturaOrganizacionalArvore> ObterArvore(long idProjeto, long? idSelected = null, bool montagemArvore = true)
         {
             var arvore = projetoEstruturaOrganizacionalRepository.FirstOrDefault(item => item.IdProjeto == idProjeto && item.Tipo == Entities.TipoProjetoEstruturaOrganizacional.Projeto, loadDependencies: false);
             var itens = new List<ProjetoEstruturaOrganizacionalArvore>();
@@ -37,30 +37,31 @@ namespace GPD.Backend.Domain.Services.Implementations
                 Tipo = (int)arvore.Tipo,
                 Descricao = projetoRepository.GetById(idProjeto, false).Nome,
                 Ordem = arvore.Ordem
-            }, itens);
+            }, itens, idSelected, montagemArvore);
 
             var result = new List<ProjetoEstruturaOrganizacionalArvore>();
             var resultItem = itens.First(arv => arv.Id == arvore.Id);
             result.Add(resultItem);
-            LoadArvoreByMemory(resultItem, itens);
+            LoadArvoreByMemory(resultItem, itens, idSelected, montagemArvore);
 
             return result;
         }
 
-        private void LoadArvoreByMemory(ProjetoEstruturaOrganizacionalArvore arvore, IList<ProjetoEstruturaOrganizacionalArvore> listaArvore)
+        private void LoadArvoreByMemory(ProjetoEstruturaOrganizacionalArvore arvore, IList<ProjetoEstruturaOrganizacionalArvore> listaArvore, long? idSelected, bool montagemArvore)
         {
             var filhos = listaArvore.Where(item => item.IdSuperior == arvore.Id)?.ToList();
             if (filhos?.Any() ?? false)
             {
                 arvore.Filhos = filhos.OrderBy(item => item.Ordem).ToList();
+                arvore.Filhos.Last().UltimoItem = true;
                 foreach (var arv in filhos)
                 {
-                    LoadArvoreByMemory(arv, listaArvore);
+                    LoadArvoreByMemory(arv, listaArvore, idSelected, montagemArvore);
                 }
             }
         }
 
-        private void LoadArvoreByDatabase(ProjetoEstruturaOrganizacionalArvore arvore, IList<ProjetoEstruturaOrganizacionalArvore> listaArvore)
+        private void LoadArvoreByDatabase(ProjetoEstruturaOrganizacionalArvore arvore, IList<ProjetoEstruturaOrganizacionalArvore> listaArvore, long? idSelected, bool montagemArvore)
         {
             var itens = projetoEstruturaOrganizacionalRepository.Filter(item => item.IdSuperior == arvore.Id && item.Tipo != Entities.TipoProjetoEstruturaOrganizacional.Corporativo);
             if (itens?.Any() ?? false)
@@ -90,10 +91,17 @@ namespace GPD.Backend.Domain.Services.Implementations
                         IdUsuario = arv.IdUsuario,
                         Descricao = descricao,
                         Ordem = arv.Ordem
-                    }, listaArvore);
+                    }, listaArvore, idSelected, montagemArvore);
                 }
             }
 
+            //TODO
+            if (montagemArvore)
+            {
+                arvore.Expanded = true;
+            }
+
+            arvore.Selected = idSelected.HasValue && arvore.Id == idSelected.Value;
             listaArvore.Add(arvore);
         }
     }
@@ -105,6 +113,8 @@ namespace GPD.Backend.Domain.Services.Implementations
         public string Descricao { get; set; }
 
         public bool Expanded { get; set; }
+
+        public bool Selected { get; set; }
 
         public long? IdSuperior { get; set; }
 
@@ -119,6 +129,8 @@ namespace GPD.Backend.Domain.Services.Implementations
         public int Tipo { get; set; }
 
         public short Ordem { get; set; }
+
+        public bool UltimoItem { get; set; }
 
         public IList<ProjetoEstruturaOrganizacionalArvore> Filhos { get; set; }
     }
