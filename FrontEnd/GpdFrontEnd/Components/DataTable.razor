@@ -9,6 +9,13 @@
 <div class="table-responsive">
     <div class="card">
 
+        @if (Label != null)
+        {
+            <div class="card-header">
+                <h3>@Label</h3>
+            </div>
+        }
+
         <div class="card-body">
 
             <table class="table table-hover table-bordered">
@@ -63,7 +70,7 @@
                                         var value = Convert.ToBoolean(property.GetValue(item));
 
                                         <th>
-                                            <input type="checkbox" style="width:20px; height:20px" checked="@value" @onclick="@(() => OnCheckBox?.Invoke(item, !value))" />
+                                            <input type="checkbox" style="width:20px; height:20px" checked="@value" @onclick="@(() => OnCheckBoxAsync?.Invoke(item, !value))" />
                                         </th>
                                     }
 
@@ -143,11 +150,14 @@
                 </div>
             }
 
-            <div style="float:right">
-                <button class="btn btn-default" style="border: 1px solid darkgray" disabled="@(paginaAtual <= 0)" @onclick="VoltarPagina"><span class="oi oi-arrow-circle-left" style="font-size:18px"></span></button>
-                @ObterPaginalAtual() de @GetTotalPages()
-                <button class="btn btn-default" style="border: 1px solid darkgray" disabled="@(paginaAtual + 1 >= GetTotalPages())" @onclick="AvancarPagina"><span class="oi oi-arrow-circle-right" style="font-size:18px"></span></button>
-            </div>
+            @if (OnPaginate != null)
+            {
+                <div style="float:right">
+                    <button class="btn btn-default" style="border: 1px solid darkgray" disabled="@(paginaAtual <= 0)" @onclick="VoltarPagina"><span class="oi oi-arrow-circle-left" style="font-size:18px"></span></button>
+                    @ObterPaginalAtual() de @GetTotalPages()
+                    <button class="btn btn-default" style="border: 1px solid darkgray" disabled="@(paginaAtual + 1 >= GetTotalPages())" @onclick="AvancarPagina"><span class="oi oi-arrow-circle-right" style="font-size:18px"></span></button>
+                </div>
+            }
         </div>
     </div>
 </div>
@@ -181,10 +191,13 @@
     public string CheckBoxProperty { get; set; }
 
     [Parameter]
-    public Action<TItem, bool> OnCheckBox { get; set; }
+    public Func<TItem, bool, Task> OnCheckBoxAsync { get; set; }
 
     [Parameter]
     public uint CountItemsInPage { get; set; } = 10;
+
+    [Parameter]
+    public string Label { get; set; }
 
     private bool SemDadosParaExibir;
 

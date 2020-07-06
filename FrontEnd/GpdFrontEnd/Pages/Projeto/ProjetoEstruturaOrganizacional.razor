@@ -1,8 +1,9 @@
 @page "/projeto-estrutura-organizacional"
 @using GpdFrontEnd.Components.Lookups.Projeto
-@using System.IO
 @inject GpdFrontEnd.Services.System.HttpService httpService
 @inject NotificationService notificationService
+@inject IJSRuntime js
+@inject NavigationManager navigation
 
 <div style="width:auto; height:65px; background-color:white; border-bottom: 1px solid #007bff">
     <div class="row" style="margin-left: 0px; margin-right: 0px">
@@ -14,14 +15,14 @@
 
 <div style="width: auto">
 		
-	<div style="float:left; width: 40%; overflow-x:auto; height: calc(100vh - 122px); background-color: white">
+	<div style="float:left; width: @(percentualWidthDiv1)%; overflow-x:auto; height: calc(100vh - 122px); background-color: white">
 
         @if (lkpProjeto?.GetValueOrNull() != null)
         {
-            <div class="row">
-                <div class="col-md-12" style="margin-bottom: 16px">
-                    <RadzenTree Change="@OnChange" Data="@itens" Expand="@LoadFiles" Style="width: 100%; height: auto">
-                        <RadzenTreeLevel Text="@GetTextForNode" Template="@Template" Expanded="@(data =>  ((ProjetoEstruturaOrganizacionalArvore) data).Expanded )" />
+            <div class="row" style="margin-left: 0px; margin-right: 0px">
+                <div class="col-md-12" style="margin-left: -10px">
+                    <RadzenTree Change="@OnChange" Data="@itens" Expand="@Expandir" Style="width: auto; height: auto">
+                        <RadzenTreeLevel Text="@GetTextForNode" Template="@Template" Expanded="@(data =>  ((ProjetoEstruturaOrganizacionalArvore) data).Expanded)" />
                     </RadzenTree>
                 </div>
             </div>
@@ -29,11 +30,16 @@
 
 	</div>
 		
-	<div style="float:left; width: 60%; overflow-x:auto; height: calc(100vh - 122px); background-color: white">
-		
-
-
-	</div>
+    @if (percentualWidthDiv2 == "60")
+    {
+        <div style="float:left; width: @(percentualWidthDiv2)%; overflow-x:auto; height: calc(100vh - 122px); background-color: #007bff">
+            <div class="row" style="margin-top:20px; margin-left: 0px; margin-right: 0px">
+                <div class="col-md-10 mx-auto">
+                    <DataTable Data="data" Columns="columns" TItem="IndicadorCorporativo" CheckBoxProperty="Vinculado" Label="Indicadores corporativos" OnCheckBoxAsync="OnCheckBoxAsync" />
+                </div>
+            </div>
+        </div>
+    }
 		
 </div>
 
@@ -41,11 +47,125 @@
 
 @code
 {
+    private IList<DataTable<IndicadorCorporativo>.Column> columns;
+    private IList<IndicadorCorporativo> data;
+
+    private async Task BuscarIndicadoresCorporativosAsync()
+    {
+        var http = await httpService.GetHttpAsync();
+        if (http != null)
+        {
+            SetVisibleLoader(true);
+            try
+            {
+                var response = await http.GetAsync($"projeto-estrutura-organizacional/obter-indicadores-corporativos/{lkpProjeto.GetValue()}");
+                if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
+                {
+                    throw new Exception(response.Content.ReadAsStringAsync().Result);
+                }
+
+                data = await httpService.GetObjectAsync<IList<IndicadorCorporativo>>(response);
+            }
+            catch (Exception exc)
+            {
+                data = null;
+                Console.WriteLine(exc.Message);
+                notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = "Erro", Detail = "Um erro aconteceu ao realizar a pesquisa.", Duration = 5000 });
+            }
+            SetVisibleLoader(false);
+        }
+    }
+
+    private async Task OnCheckBoxAsync(IndicadorCorporativo indicadorCorporativo, bool value)
+    {
+        var http = await httpService.GetHttpAsync();
+        if (http != null)
+        {
+            SetVisibleLoader(true);
+            try
+            {
+                HttpResponseMessage response;
+                
+                if (value)
+                {
+                    var arvore = new ProjetoEstruturaOrganizacionalArvore { IdProjeto = lkpProjeto.GetValue(), Tipo = 2, IdIndicador = indicadorCorporativo.Id, Ordem = 1 };
+                    response = await http.PostAsJsonAsync("projeto-estrutura-organizacional", arvore);
+                }
+                else
+                {
+                    response = await http.DeleteAsync($"projeto-estrutura-organizacional?id={indicadorCorporativo.IdProjetoEstruturaOrganizacional.Value}");
+                }
+                
+                if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
+                {
+                    throw new Exception(response.Content.ReadAsStringAsync().Result);
+                }
+
+                if (value)
+                {
+                    indicadorCorporativo.IdProjetoEstruturaOrganizacional = long.Parse(response.Content.ReadAsStringAsync().Result);
+                    notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = "Sucesso", Detail = "Indicador vinculado com sucesso.", Duration = 5000 });
+                }
+                else
+                {
+                    notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = "Sucesso", Detail = "Indicador desvinculado com sucesso.", Duration = 5000 });
+                }
+            }
+            catch (Exception exc)
+            {
+                Console.WriteLine(exc.Message);
+                notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = "Erro", Detail = "Um erro aconteceu ao realizar esta operação.", Duration = 5000 });
+            }
+            SetVisibleLoader(false);
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        columns = new List<DataTable<IndicadorCorporativo>.Column>();
+        columns.Add(new DataTable<IndicadorCorporativo>.Column
+        {
+            PropertyName = "Identificador",
+            DisplayName = "Identificador"
+        });
+        columns.Add(new DataTable<IndicadorCorporativo>.Column
+        {
+            PropertyName = "Nome",
+            DisplayName = "Nome"
+        });
+        columns.Add(new DataTable<IndicadorCorporativo>.Column
+        {
+            PropertyName = "_TipoCalculo",
+            DisplayName = "Tipo de cálculo"
+        });
+        data = new List<IndicadorCorporativo>();
+    }
+
     private ProjetoLookup lkpProjeto;
     private bool loaderVisible;
+    private string percentualWidthDiv1 = "100";
+    private string percentualWidthDiv2 = "0";
     
     private IList<ProjetoEstruturaOrganizacionalArvore> itens = new List<ProjetoEstruturaOrganizacionalArvore>();
     private ProjetoEstruturaOrganizacionalArvore ArvoreSelected = null;
+
+    private void IndicadoresCorporativo()
+    {
+        if (ArvoreSelected.Tipo == 1)
+        {
+            percentualWidthDiv1 = "40";
+            percentualWidthDiv2 = "60";
+            Task.Run(async () => await BuscarIndicadoresCorporativosAsync());
+        }
+        else
+        {
+            percentualWidthDiv1 = "100";
+            percentualWidthDiv2 = "0";
+        }
+
+        StateHasChanged();
+    }
 
     private async Task ChangeProjectAsync()
     {
@@ -94,14 +214,17 @@
     {
         ArvoreSelected = (ProjetoEstruturaOrganizacionalArvore) args.Value;
         ArvoreSelected.Expanded = true;
+        IndicadoresCorporativo();
     }
 
-    void LoadFiles(Radzen.TreeExpandEventArgs args)
+    void Expandir(Radzen.TreeExpandEventArgs args)
     {
         var arv = (ProjetoEstruturaOrganizacionalArvore)args.Value;
         args.Children.Data = arv.Filhos;
         args.Children.Text = GetTextForNode;
         args.Children.Template = Template;
+        args.Children.Expanded = (i) => arv.Expanded;
+        Task.Run(async () => await js.InvokeVoidAsync("deleteCaretArvore"));
     }
 
     RenderFragment<RadzenTreeItem> Template = (context) => builder =>
@@ -141,13 +264,22 @@
             builder.AddAttribute(2, "Style", "margin-left: 5px; padding-right: 5px; color: red");
         }
 
+        if (arv.Filhos is null || !arv.Filhos.Any())
+        {
+            builder.AddAttribute(3, "id", $"DELETECARET_{arv.Id}");
+        }
+        else
+        {
+            builder.AddAttribute(3, "id", $"ARV_{arv.Id}");
+        }
+        
         builder.CloseComponent();
-        builder.AddContent(3, context.Text);
+        builder.AddContent(4, context.Text);
     };
 
     public class ProjetoEstruturaOrganizacionalArvore
     {
-        public long Id { get; set; }
+        public long? Id { get; set; }
 
         public string Descricao { get; set; }
 
@@ -168,6 +300,36 @@
         public short Ordem { get; set; }
 
         public IList<ProjetoEstruturaOrganizacionalArvore> Filhos { get; set; }
+    }
+
+    class IndicadorCorporativo
+    {
+        public long Id {get; set;}
+
+        public long? IdProjetoEstruturaOrganizacional {get; set;}
+
+        public string Identificador {get; set;}
+
+        public string Nome {get; set;}
+
+        public int TipoCalculo {get; set;}
+
+        public bool Vinculado { get; set; }
+
+        public string _TipoCalculo 
+        {
+            get
+            {
+                switch(TipoCalculo)
+                {
+                    case 1: return "Não calculado";
+                    case 2: return "Somenta meta";
+                    case 3: return "Somenta realizado";
+                    case 4: return "Meta e realizado calculados";
+                    default: throw new Exception("Tipo de cálculo inválido.");
+                }
+            }
+        }
     }
 
 }

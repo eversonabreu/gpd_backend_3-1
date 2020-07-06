@@ -172,6 +172,22 @@
             return false;
         }
 
+        function deleteCaretArvore() {
+            try {
+                var elements = document.getElementsByTagName('i');
+                for (var index = 0; index < elements.length; index++) {
+                    if (elements[index].id.toString().startsWith('DELETECARET')) {
+                        var innerElements = elements[index].parentNode.children;
+                        for (var subIndex = 0; subIndex < innerElements.length; subIndex++) {
+                            if (innerElements[subIndex].tagName.toUpperCase() === "SPAN") {
+                                innerElements[subIndex].style.display = 'none';
+                            }
+                        }
+                    }
+                }
+            } catch {}
+        }
+
     </script>
     <script src="_content/Radzen.Blazor/Radzen.Blazor.js"></script>
 </body>

@@ -1,0 +1,184 @@
+@page "/dashboard"
+@using GpdFrontEnd.Components.Lookups.Projeto
+@inject GpdFrontEnd.Services.System.HttpService httpService
+@inject NotificationService notificationService
+@inject IJSRuntime js
+
+<div style="width:auto; height:65px; background-color:white; border-bottom: 1px solid #007bff">
+    <div class="row" style="margin-left: 0px; margin-right: 0px">
+        <div class="col-md-3">
+            <ProjetoLookup @ref="lkpProjeto" Label="Projeto" PlaceHolder="Selecione um projeto" OnChange="ChangeProjectAsync"/>
+        </div>
+    </div>
+</div>
+
+<div style="width: auto">
+		
+	<div style="float:left; width: 40%; overflow-x:auto; height: calc(100vh - 122px); background-color: white">
+
+        @if (lkpProjeto?.GetValueOrNull() != null)
+        {
+            <div class="row">
+                <div class="col-md-12" style="margin-bottom: 16px">
+                    <RadzenTree Change="@OnChange" Data="@itens" Expand="@Expandir" Style="width: auto; height: auto">
+                        <RadzenTreeLevel Text="@GetTextForNode" Template="@Template" Expanded="@(data =>  ((ProjetoEstruturaOrganizacionalArvore) data).Expanded)" />
+                    </RadzenTree>
+                </div>
+            </div>
+        }
+
+	</div>
+		
+	<div style="float:left; width: 60%; overflow-x:auto; height: calc(100vh - 122px); background-color: white">
+		
+
+
+	</div>
+		
+</div>
+
+<Loader Visible="loaderVisible"/>
+
+@code
+{
+    private ProjetoLookup lkpProjeto;
+    private bool loaderVisible;
+    
+    private IList<ProjetoEstruturaOrganizacionalArvore> itens = new List<ProjetoEstruturaOrganizacionalArvore>();
+    private ProjetoEstruturaOrganizacionalArvore ArvoreSelected = null;
+
+    private async Task ChangeProjectAsync()
+    {
+        if (lkpProjeto?.GetValueOrNull() != null)
+        {
+            var http = await httpService.GetHttpAsync();
+            if (http != null)
+            {
+                SetVisibleLoader(true);
+                try
+                {
+                    var response = await http.GetAsync($"projeto-estrutura-organizacional/obter-arvore/{lkpProjeto.GetValue()}");
+                    if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
+                    {
+                        throw new Exception(response.Content.ReadAsStringAsync().Result);
+                    }
+                    
+                    itens = await httpService.GetObjectAsync<IList<ProjetoEstruturaOrganizacionalArvore>>(response);
+                }
+                catch (Exception exc)
+                {
+                    itens = new List<ProjetoEstruturaOrganizacionalArvore>();
+                    Console.WriteLine(exc.Message);
+                    notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = "Erro", Detail = "Um erro aconteceu ao realizar a pesquisa.", Duration = 5000 });
+                }
+                SetVisibleLoader(false);
+            }
+        }
+
+        StateHasChanged();
+    }
+
+    private void SetVisibleLoader(bool visible)
+    {
+        loaderVisible = visible;
+        StateHasChanged();
+    }
+
+    string GetTextForNode(object data)
+    {
+        var arv = (ProjetoEstruturaOrganizacionalArvore)data;
+        return arv.Descricao;
+    }
+
+    void OnChange(Radzen.TreeEventArgs args)
+    {
+        ArvoreSelected = (ProjetoEstruturaOrganizacionalArvore) args.Value;
+        ArvoreSelected.Expanded = true;
+    }
+
+    void Expandir(Radzen.TreeExpandEventArgs args)
+    {
+        var arv = (ProjetoEstruturaOrganizacionalArvore)args.Value;
+        args.Children.Data = arv.Filhos;
+        args.Children.Text = GetTextForNode;
+        args.Children.Template = Template;
+        args.Children.Expanded = (i) => arv.Expanded;
+        Task.Run(async () => await js.InvokeVoidAsync("deleteCaretArvore"));
+    }
+
+    RenderFragment<RadzenTreeItem> Template = (context) => builder =>
+    {
+        var arv = (ProjetoEstruturaOrganizacionalArvore)context.Value;
+
+        builder.OpenComponent<RadzenIcon>(0);
+
+        if (arv.Tipo == 1)
+        {
+            builder.AddAttribute(1, "Icon", "folder");
+            builder.AddAttribute(2, "Style", "margin-left: 5px; padding-right: 5px; color: orange");
+        }
+        else if (arv.Tipo == 3)
+        {
+            builder.AddAttribute(1, "Icon", "group_work");
+            builder.AddAttribute(2, "Style", "margin-left: 5px; padding-right: 5px; color: blue");
+        }
+        else if (arv.Tipo == 4)
+        {
+            builder.AddAttribute(1, "Icon", "chrome_reader_mode");
+            builder.AddAttribute(2, "Style", "margin-left: 5px; padding-right: 5px; color: purple");
+        }
+        else if (arv.Tipo == 5)
+        {
+            builder.AddAttribute(1, "Icon", "assignment_ind");
+            builder.AddAttribute(2, "Style", "margin-left: 5px; padding-right: 5px; color: green");
+        }
+        else if (arv.Tipo == 6)
+        {
+            builder.AddAttribute(1, "Icon", "account_circle");
+            builder.AddAttribute(2, "Style", "margin-left: 5px; padding-right: 5px; color: black");
+        }
+        else
+        {
+            builder.AddAttribute(1, "Icon", "donut_large");
+            builder.AddAttribute(2, "Style", "margin-left: 5px; padding-right: 5px; color: red");
+        }
+
+        if (arv.Filhos is null || !arv.Filhos.Any())
+        {
+            builder.AddAttribute(3, "id", $"DELETECARET_{arv.Id}");
+        }
+        else
+        {
+            builder.AddAttribute(3, "id", $"ARV_{arv.Id}");
+        }
+        
+        builder.CloseComponent();
+        builder.AddContent(4, context.Text);
+    };
+
+    public class ProjetoEstruturaOrganizacionalArvore
+    {
+        public long Id { get; set; }
+
+        public string Descricao { get; set; }
+
+        public bool Expanded { get; set; }
+
+        public long? IdSuperior { get; set; }
+
+        public long? IdNivelOrganizacional { get; set; }
+
+        public long? IdIndicador { get; set; }
+
+        public long? IdUsuario { get; set; }
+
+        public long IdProjeto { get; set; }
+
+        public int Tipo { get; set; }
+
+        public short Ordem { get; set; }
+
+        public IList<ProjetoEstruturaOrganizacionalArvore> Filhos { get; set; }
+    }
+
+}
