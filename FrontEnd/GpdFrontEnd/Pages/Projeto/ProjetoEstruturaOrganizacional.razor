@@ -1,5 +1,6 @@
 @page "/projeto-estrutura-organizacional"
 @using GpdFrontEnd.Components.Lookups.Projeto
+@using GpdFrontEnd.Components.Lookups.NivelOrganizacional
 @inject GpdFrontEnd.Services.System.HttpService httpService
 @inject NotificationService notificationService
 @inject IJSRuntime js
@@ -10,6 +11,30 @@
         <div class="col-md-3">
             <ProjetoLookup @ref="lkpProjeto" Label="Projeto" PlaceHolder="Selecione um projeto" OnChange="ChangeProjectAsync"/>
         </div>
+        @if (lkpProjeto?.GetValueOrNull() != null && ArvoreSelected != null)
+        {
+            <div class="col-md-9" style="margin-top: 25px">
+                <button hidden="@(ArvoreSelected.Tipo == 1)" style="cursor: pointer; color: orange; width: 35px; height: 38px; border: 1px solid gray;"><span class="oi oi-pencil"></span></button>
+                <button @onclick="ExcluirAsync" hidden="@(ArvoreSelected.Tipo == 1 || ArvorePossuiFilhos())" style="cursor: pointer; color: red; width: 35px; height: 38px; border: 1px solid gray;"><span class="oi oi-trash"></span></button>
+                <button @onclick="@(async () => await AvancarRetrocederAsync(false))" hidden="@(ArvoreSelected.Tipo == 1 || ArvoreSelected.Ordem == 1)" style="cursor: pointer; color: blue; width: 35px; height: 38px; border: 1px solid gray;"><span class="oi oi-arrow-circle-top"></span></button>
+                <button @onclick="@(async () => await AvancarRetrocederAsync(true))" hidden="@(ArvoreSelected.Tipo == 1 || ArvoreSelected.UltimoItem)" style="cursor: pointer; color: blue; width: 35px; height: 38px; border: 1px solid gray;"><span class="oi oi-arrow-circle-bottom"></span></button>
+
+                <div hidden="@(ArvoreSelected.Tipo == 7)" class="dropdown show" style="float: left; padding-right: 5px" @onmouseout="@(() => focus = false)" @onmousemove="@(() => focus = true)">
+                    <button @onclick="ShowAdd" @onblur="OnBlur" class="btn btn-info dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Adicionar
+                    </button>
+
+                    <div class="dropdown-menu @show" style="cursor: pointer" aria-labelledby="dropdownMenuLink">
+                        <div @onclick="AddGrupoAsync" hidden="@(!(ArvoreSelected.Tipo == 1 || ArvoreSelected.Tipo == 3))" class="dropdown-item"><span class="oi oi-people"></span> Grupo</div>
+                        <div @onclick="AddDepartamentoAsync" hidden="@(!(ArvoreSelected.Tipo == 3 || ArvoreSelected.Tipo == 4))" class="dropdown-item"><span class="oi oi-home"></span> Departamento</div>
+                        <div @onclick="AddCargoAsync" hidden="@(!(ArvoreSelected.Tipo == 3 || ArvoreSelected.Tipo == 4))" class="dropdown-item"><span class="oi oi-spreadsheet"></span> Cargo</div>
+                        <div hidden="@(ArvoreSelected.Tipo != 5)" class="dropdown-item"><span class="oi oi-person"></span> Usuário</div>
+                        <div hidden="@(ArvoreSelected.Tipo != 6)" class="dropdown-item"><span class="oi oi-dashboard"></span> Indicador</div>
+                    </div>
+                </div>
+
+            </div>
+        }
     </div>
 </div>
 
@@ -22,7 +47,7 @@
             <div class="row" style="margin-left: 0px; margin-right: 0px">
                 <div class="col-md-12" style="margin-left: -10px">
                     <RadzenTree Change="@OnChange" Data="@itens" Expand="@Expandir" Style="width: auto; height: auto">
-                        <RadzenTreeLevel Text="@GetTextForNode" Template="@Template" Expanded="@(data =>  ((ProjetoEstruturaOrganizacionalArvore) data).Expanded)" />
+                        <RadzenTreeLevel Text="@GetTextForNode" Template="@Template" Expanded="@(data =>  ((ProjetoEstruturaOrganizacionalArvore) data).Expanded)" Selected="@(data =>  ((ProjetoEstruturaOrganizacionalArvore) data).Selected)" />
                     </RadzenTree>
                 </div>
             </div>
@@ -45,10 +70,123 @@
 
 <Loader Visible="loaderVisible"/>
 
+<NivelOrganizacionalLookup @ref="lkpNivelGrupo" Background="true" Tipo="1" OnChange="AddGrupoChangeAsync"/>
+<NivelOrganizacionalLookup @ref="lkpNivelDepartamento" Background="true" Tipo="2" OnChange="AddDeparamentoChangeAsync"/>
+<NivelOrganizacionalLookup @ref="lkpNivelCargo" Background="true" Tipo="3" OnChange="AddCargoChangeAsync"/>
+
 @code
 {
+    private NivelOrganizacionalLookup lkpNivelGrupo;
+    private NivelOrganizacionalLookup lkpNivelDepartamento;
+    private NivelOrganizacionalLookup lkpNivelCargo;
     private IList<DataTable<IndicadorCorporativo>.Column> columns;
     private IList<IndicadorCorporativo> data;
+    private bool focus;
+    private string show = string.Empty;
+
+    private async Task AddGrupoChangeAsync()
+    {
+        await AddItemAsync(lkpNivelGrupo.GetValue(), 3);
+    }
+
+    private async Task AddDeparamentoChangeAsync()
+    {
+        await AddItemAsync(lkpNivelDepartamento.GetValue(), 4);
+    }
+
+    private async Task AddCargoChangeAsync()
+    {
+        await AddItemAsync(lkpNivelCargo.GetValue(), 5);
+    }
+
+    private async Task AddItemAsync(long idReferencia, int tipo)
+    {
+        var http = await httpService.GetHttpAsync();
+        if (http != null)
+        {
+            SetVisibleLoader(true);
+            try
+            {
+                itens = null;
+                StateHasChanged();
+
+                var arvore = new ArvoreAddUpdate 
+                {
+                    IdProjeto = lkpProjeto.GetValue(),
+                    IdReferencia = idReferencia,
+                    IdSuperior = ArvoreSelected.Id.Value,
+                    Tipo = tipo
+                };
+
+                var response = await http.PostAsJsonAsync("projeto-estrutura-organizacional/adicionar-item", arvore);
+                if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
+                {
+                    throw new Exception(response.Content.ReadAsStringAsync().Result);
+                }
+
+                notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = "Sucesso", Detail = "Registro adicionado com sucesso.", Duration = 5000 });
+            }
+            catch (Exception exc)
+            {
+                itens = null;
+                Console.WriteLine(exc.Message);
+                notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = "Erro", Detail = "Um erro aconteceu ao gravar o registro.", Duration = 5000 });
+            }
+            SetVisibleLoader(false);
+            await ChangeProjectAsync();
+        }
+    }
+
+    private async Task AddGrupoAsync()
+    {
+        show = string.Empty;
+        StateHasChanged();
+        await lkpNivelGrupo.PesquisarAsync();
+    }
+
+    private async Task AddDepartamentoAsync()
+    {
+        show = string.Empty;
+        StateHasChanged();
+        await lkpNivelDepartamento.PesquisarAsync();
+    }
+
+    private async Task AddCargoAsync()
+    {
+        show = string.Empty;
+        StateHasChanged();
+        await lkpNivelCargo.PesquisarAsync();
+    }
+
+    private bool ArvorePossuiFilhos()
+    {
+        if (ArvoreSelected == null)
+        {
+            return false;
+        }
+
+        return ArvoreSelected.Filhos != null && ArvoreSelected.Filhos.Any();
+    }
+
+    private void ShowAdd()
+    {
+        if (string.IsNullOrEmpty(show))
+        {
+            show = "show";
+        }
+        else
+        {
+            show = string.Empty;
+        }
+    }
+
+    private void OnBlur()
+    {
+        if (!focus)
+        {
+            show = string.Empty;
+        }
+    }
 
     private async Task BuscarIndicadoresCorporativosAsync()
     {
@@ -73,6 +211,69 @@
                 notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = "Erro", Detail = "Um erro aconteceu ao realizar a pesquisa.", Duration = 5000 });
             }
             SetVisibleLoader(false);
+        }
+    }
+
+    private async Task ExcluirAsync()
+    {
+        var result = await js.InvokeAsync<bool>("confirm", "Tem certeza que deseja excluir este registro.");
+        if (result == false) return;
+        var http = await httpService.GetHttpAsync();
+        if (http != null)
+        {
+            SetVisibleLoader(true);
+            try
+            {
+                itens = null;
+                StateHasChanged();
+                var response = await http.GetAsync($"projeto-estrutura-organizacional/exclui-item/{ArvoreSelected.Id}/{ArvoreSelected.IdSuperior.Value}/{lkpProjeto.GetValue()}");
+                if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
+                {
+                    throw new Exception(response.Content.ReadAsStringAsync().Result);
+                }
+
+                itens = await httpService.GetObjectAsync<IList<ProjetoEstruturaOrganizacionalArvore>>(response);
+            }
+            catch (Exception exc)
+            {
+                itens = null;
+                Console.WriteLine(exc.Message);
+                notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = "Erro", Detail = "Um erro aconteceu ao excluir o registro.", Duration = 5000 });
+            }
+            ArvoreSelected = null;
+            SetVisibleLoader(false);
+            await ChangeProjectAsync();
+        }
+    }
+
+    private async Task AvancarRetrocederAsync(bool avancar)
+    {
+        var http = await httpService.GetHttpAsync();
+        if (http != null)
+        {
+            SetVisibleLoader(true);
+            try
+            {
+                itens = null;
+                StateHasChanged();
+                string metodo = avancar ? "avancar-nivel" : "retroceder-nivel";
+                var response = await http.GetAsync($"projeto-estrutura-organizacional/{metodo}/{ArvoreSelected.Id}/{ArvoreSelected.IdSuperior.Value}/{lkpProjeto.GetValue()}");
+                if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
+                {
+                    throw new Exception(response.Content.ReadAsStringAsync().Result);
+                }
+
+                itens = await httpService.GetObjectAsync<IList<ProjetoEstruturaOrganizacionalArvore>>(response);
+            }
+            catch (Exception exc)
+            {
+                itens = null;
+                Console.WriteLine(exc.Message);
+                notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = "Erro", Detail = "Um erro aconteceu ao excluir o registro.", Duration = 5000 });
+            }
+            ArvoreSelected = null;
+            SetVisibleLoader(false);
+            await ChangeProjectAsync();
         }
     }
 
@@ -177,6 +378,8 @@
                 SetVisibleLoader(true);
                 try
                 {
+                    itens = null;
+                    StateHasChanged();
                     var response = await http.GetAsync($"projeto-estrutura-organizacional/obter-arvore/{lkpProjeto.GetValue()}");
                     if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
                     {
@@ -214,6 +417,7 @@
     {
         ArvoreSelected = (ProjetoEstruturaOrganizacionalArvore) args.Value;
         ArvoreSelected.Expanded = true;
+        ArvoreSelected.Selected = true;
         IndicadoresCorporativo();
     }
 
@@ -224,6 +428,7 @@
         args.Children.Text = GetTextForNode;
         args.Children.Template = Template;
         args.Children.Expanded = (i) => arv.Expanded;
+        args.Children.Selected = (i) => arv.Selected;
         Task.Run(async () => await js.InvokeVoidAsync("deleteCaretArvore"));
     }
 
@@ -285,6 +490,8 @@
 
         public bool Expanded { get; set; }
 
+        public bool Selected { get; set; }
+
         public long? IdSuperior { get; set; }
 
         public long? IdNivelOrganizacional { get; set; }
@@ -298,6 +505,8 @@
         public int Tipo { get; set; }
 
         public short Ordem { get; set; }
+
+        public bool UltimoItem { get; set; }
 
         public IList<ProjetoEstruturaOrganizacionalArvore> Filhos { get; set; }
     }
@@ -330,6 +539,19 @@
                 }
             }
         }
+    }
+
+    public class ArvoreAddUpdate
+    {
+        public long? Id { get; set; }
+
+        public long IdProjeto { get; set; }
+
+        public int Tipo { get; set; }
+
+        public long IdReferencia { get; set; }
+
+        public long IdSuperior { get; set; }
     }
 
 }
