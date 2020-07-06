@@ -14,12 +14,15 @@ namespace GPD.Backend.Api.Controllers
     public class ProjetoEstruturaOrganizacionalController : Controller<ProjetoEstruturaOrganizacionalModel, ProjetoEstruturaOrganizacional>
     {
         private readonly IProjetoEstruturaOrganizacionalService projetoEstruturaOrganizacionalService;
+        private readonly IIndicadorRepository indicadorRepository;
 
         public ProjetoEstruturaOrganizacionalController(IProjetoEstruturaOrganizacionalRepository projetoEstruturaOrganizacionalRepository,
             IHttpContextAccessor httpContextAccessor,
-            IProjetoEstruturaOrganizacionalService projetoEstruturaOrganizacionalService) : base(projetoEstruturaOrganizacionalRepository, httpContextAccessor) 
+            IProjetoEstruturaOrganizacionalService projetoEstruturaOrganizacionalService,
+            IIndicadorRepository indicadorRepository) : base(projetoEstruturaOrganizacionalRepository, httpContextAccessor) 
         {
             this.projetoEstruturaOrganizacionalService = projetoEstruturaOrganizacionalService;
+            this.indicadorRepository = indicadorRepository;
         }
 
         [Route("obter-arvore/{idProjeto:long}"), HttpGet]
@@ -27,6 +30,13 @@ namespace GPD.Backend.Api.Controllers
         {
             //System.Diagnostics.Debugger.Launch();
             return projetoEstruturaOrganizacionalService.ObterArvore(idProjeto);
+        }
+
+        [Route("obter-indicadores-corporativos/{idProjeto:long}"), HttpGet]
+        public IEnumerable<IndicadoresCorporativos> ObterIndicadoresCorporativos(long idProjeto)
+        {
+            //System.Diagnostics.Debugger.Launch();
+            return indicadorRepository.ObterIndicadoresCorporativos(idProjeto);
         }
     }
 }

@@ -18,6 +18,47 @@ namespace GPD.Backend.Infrastructure.Database.Repositories
         {
             this.projetoEstruturaOrganizacionalRepository = projetoEstruturaOrganizacionalRepository;
         }
+
+        public IEnumerable<IndicadoresCorporativos> ObterIndicadoresCorporativos(long idProjeto)
+        {
+            var result = new List<IndicadoresCorporativos>();
+            Exception excSql = null;
+            using var connection = new Microsoft.Data.SqlClient.SqlConnection(databaseContext.Database.GetDbConnection().ConnectionString);
+            connection.Open();
+
+            string sql = @"select a.Id, a.Identificador, a.Nome, a.TipoCalculo, case when b.IdIndicador is null then 0 else 1 end Vinculado, B.Id ID2 from Indicador a 
+                           left join (select IdIndicador, Id from ProjetoEstruturaOrganizacional where IdProjeto = @p1 and Tipo = 2) b on (a.Id = b.IdIndicador) 
+                           where a.Corporativo = 1 order by a.Nome";
+            using (var command = new Microsoft.Data.SqlClient.SqlCommand(sql, connection))
+            {
+                try
+                {
+                    command.Parameters.AddWithValue("p1", idProjeto);
+                    using var reader = command.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        result.Add(new IndicadoresCorporativos
+                        {
+                            Id = reader.GetInt64(0),
+                            Identificador = reader.GetString(1),
+                            Nome = reader.GetString(2),
+                            TipoCalculo = reader.GetInt32(3),
+                            Vinculado = reader.GetInt32(4) == 1,
+                            IdProjetoEstruturaOrganizacional = reader.IsDBNull(5) ? null : (long?) reader.GetInt64(5)
+                        });
+                    }
+                }
+                catch (Exception exc)
+                {
+                    excSql = exc;
+                }
+            }
+
+            connection.Close();
+            if (excSql != null) throw excSql;
+
+            return result;
+        }
 		
 		protected override void BeforeDelete(Indicador entity)
         {
@@ -78,4 +119,6 @@ namespace GPD.Backend.Infrastructure.Database.Repositories
             }
         }
     }
+
+
 }
