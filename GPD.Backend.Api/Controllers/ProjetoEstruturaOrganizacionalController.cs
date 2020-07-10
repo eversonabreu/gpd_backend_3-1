@@ -62,6 +62,7 @@ namespace GPD.Backend.Api.Controllers
         [Route("retroceder-nivel/{id:long}/{idSuperior:long}/{idProjeto:long}"), HttpGet]
         public IEnumerable<ProjetoEstruturaOrganizacionalArvore> RetrocederNivel(long id, long idSuperior, long idProjeto)
         {
+            //System.Diagnostics.Debugger.Launch();
             projetoEstruturaOrganizacionalRepository.RetrocederNivel(id, idSuperior);
             //return projetoEstruturaOrganizacionalService.ObterArvore(idProjeto, id);
             return new List<ProjetoEstruturaOrganizacionalArvore>();
@@ -70,7 +71,13 @@ namespace GPD.Backend.Api.Controllers
         [Route("adicionar-item"), HttpPost]
         public void AdicionarItem([FromBody] ArvoreAddUpdate arvore)
         {
-            int ordem = projetoEstruturaOrganizacionalRepository.Filter(item => item.IdSuperior == arvore.IdSuperior).Max(it => it.Ordem) + 1;
+            int ordem = 1;
+            var ultimaOrdem = projetoEstruturaOrganizacionalRepository.Filter(item => item.IdSuperior == arvore.IdSuperior);
+            if (ultimaOrdem.Any())
+            {
+                ordem = ultimaOrdem.Max(it => it.Ordem) + 1;
+            }
+
             var projetoEstruturaOrganizacionalReferencia = new ProjetoEstruturaOrganizacional();
 
             if (arvore.Tipo == 3 || arvore.Tipo == 4 || arvore.Tipo == 5)
@@ -91,6 +98,28 @@ namespace GPD.Backend.Api.Controllers
             projetoEstruturaOrganizacionalReferencia.IdSuperior = arvore.IdSuperior;
             projetoEstruturaOrganizacionalReferencia.IdProjeto = arvore.IdProjeto;
             projetoEstruturaOrganizacionalRepository.Add(projetoEstruturaOrganizacionalReferencia);
+        }
+
+        [Route("alterar-item/{id:long}/{idReferencia:long}/{tipo:int}"), HttpGet]
+        public int AlterarItem(long id, long idReferencia, int tipo)
+        {
+            var arvore = projetoEstruturaOrganizacionalRepository.GetById(id, false);
+
+            if (tipo == 3 || tipo == 4 || tipo == 5)
+            {
+                arvore.IdNivelOrganizacional = idReferencia;
+            }
+            else if (tipo == 6)
+            {
+                arvore.IdUsuario = idReferencia;
+            }
+            else
+            {
+                arvore.IdIndicador = idReferencia;
+            }
+
+            projetoEstruturaOrganizacionalRepository.Update(arvore);
+            return 1;
         }
     }
 

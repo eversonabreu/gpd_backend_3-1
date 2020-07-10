@@ -19,7 +19,7 @@ namespace GPD.Commom.Models
         public int Mes { get; set; }
 
         [Required(ErrorMessage = "O ano é obrigatório.")]
-        [Range(minimum: 2015, maximum: 2050, ErrorMessage = "Ano inválido.")]
+        [Range(minimum: 2000, maximum: 2100, ErrorMessage = "Ano inválido.")]
         public int Ano { get; set; }
 
         [Required(ErrorMessage = "Valor da meta é obrigatório.")]

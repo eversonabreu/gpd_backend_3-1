@@ -75,5 +75,9 @@ namespace GPD.Backend.Infrastructure.Database
         public virtual DbSet<IndicadorLancamento> IndicadorLancamentos { get; set; }
 
         public virtual DbSet<ProjetoEstruturaOrganizacional> ProjetoEstruturaOrganizacional { get; set; }
+
+        public virtual DbSet<Projeto> Projeto { get; set; }
+
+        public virtual DbSet<Indicador> Indicador { get; set; }
     }
 }

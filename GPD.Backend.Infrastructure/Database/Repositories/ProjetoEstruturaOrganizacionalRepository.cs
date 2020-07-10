@@ -121,7 +121,10 @@ namespace GPD.Backend.Infrastructure.Database.Repositories
 
         protected override void AfterDelete(ProjetoEstruturaOrganizacional entity)
         {
-            CorrigirOrdens(entity.IdSuperior.Value);
+            if (entity.Tipo != TipoProjetoEstruturaOrganizacional.Corporativo)
+            {
+                CorrigirOrdens(entity.IdSuperior.Value);
+            }
         }
     }
 }
