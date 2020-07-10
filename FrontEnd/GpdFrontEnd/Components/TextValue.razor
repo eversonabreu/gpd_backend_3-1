@@ -5,7 +5,7 @@
             <div class="input-group-text">@Symbol</div>
         </div>
         <input type="text" class="form-control" @onkeypress="KeyPress" @onkeypress:preventDefault="blockDigit" @onkeypress:stopPropagation="blockDigit" @bind-value="textValue"
-               @bind-value:event="oninput" @onkeyup="KeyUp" onpaste="return false;" style="border: 1px solid @(Valid ? "#ced4da" : "#F7819F"); background-color: @(Valid ? "white" : "#F6CED8")"
+               @bind-value:event="oninput" @onkeyup="KeyUp" onpaste="return false;" oncut="return false;" style="border: 1px solid @(Valid ? "#ced4da" : "#F7819F"); background-color: @(GetColor())"
                @onblur="Leave" readonly="@ReadOnly" disabled="@Disabled" placeholder="@PlaceHolder" />
 
         @if (AllowClearValue)
@@ -366,6 +366,22 @@
             catch { }
         }
 
+        private string GetColor()
+        {
+            if (Disabled)
+            {
+                return "#dedede";
+            }
+            else if (Valid)
+            {
+                return "white";
+            }
+            else
+            {
+                return "#F6CED8";
+            }
+        }
+
         private void ValidState()
         {
             Valid = true;
@@ -411,5 +427,39 @@
             }
 
             base.OnAfterRender(firstRender);
+        }
+
+        public void Clear()
+        {
+            textValue = string.Empty;
+            ValidState();
+        }
+
+        public void SetValue(decimal value)
+        {
+
+            if (!AllowNegative && value < 0m)
+            {
+                throw new Exception("Valor não pode ser negativo.");
+            }
+
+            textValue = value.ToString(System.Globalization.CultureInfo.GetCultureInfo("pt-BR"));
+            ValidState();
+        }
+
+        public void Disable(bool disabled, decimal? value = null)
+        {
+            if (value.HasValue && !AllowNegative && value.Value < 0m)
+            {
+                throw new Exception("Valor não pode ser negativo.");
+            }
+
+            if (value.HasValue)
+            {
+                textValue = value.Value.ToString(System.Globalization.CultureInfo.GetCultureInfo("pt-BR"));
+            }
+
+            Disabled = disabled;
+            ValidState();
         }
     }

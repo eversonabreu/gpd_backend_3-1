@@ -5,7 +5,7 @@
                 readonly="@ReadOnly" disabled="@Disabled" style="border: 1px solid @(Valid ? "#ced4da" : "#F7819F"); background-color: @(Valid ? "white" : "#F6CED8")">
                 @if (AllowInvalidOption)
                 {
-                    <option value="0">@TextInvalidOption</option>
+                    <option value="0" selected="@("0" == textValue)">@TextInvalidOption</option>
                 }
                 @if (Options != null)
                 {
@@ -101,5 +101,11 @@
     public long? GetValueOrNull() => string.IsNullOrEmpty(textValue) || textValue == "0" ? null : (long?) long.Parse(textValue);
 
     [Parameter]
-    public Action<long> OnSelect {get; set;}
+    public Func<long, Task> OnSelect {get; set;}
+
+    public void Clear()
+    {
+        textValue = "0";
+        ValidState();
+    }
 }

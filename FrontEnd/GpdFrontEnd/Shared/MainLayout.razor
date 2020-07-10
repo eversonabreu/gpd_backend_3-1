@@ -62,6 +62,14 @@
             conteudo = "Cadastro de estrutura organizacional de projeto";
             padding = "padding: 0 !important;";
         }
+        else if (uri.StartsWith("indicador-lancamento"))
+        {
+            conteudo = "Lançamentos de valores de indicadores ";
+        }
+        else if (uri.StartsWith("indicador-importacao"))
+        {
+            conteudo = "Importação de valores de indicadores ";
+        }
 
         if (conteudo != null)
         {

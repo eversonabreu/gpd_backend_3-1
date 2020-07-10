@@ -1,0 +1,189 @@
+<style>
+    .blazored-modal {
+        width: 70vw !important;
+    }
+</style>
+
+@inject GpdFrontEnd.Services.System.HttpService httpService
+@inject NotificationService notificationService
+@inject IModalService ModalService
+
+<div class="row" style="margin-top:10px"> 
+    <div class="col-md-12">
+        <div class="input-group">
+            <input @bind-value="filter" @bind-value:event="oninput" @onkeydown="KeyDownPesquisarAsync" class="form-control" type="search" placeholder="Digite aqui para pesquisar..." aria-label="Search" style="border-right: none;">
+            <div class="input-group-append">
+                <div @onclick="PesquisarAsync" class="input-group-text" style="background-color: #FFF"><span class="oi oi-magnifying-glass"></span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row" style="margin-top:20px"> 
+    <div class="col-md-12">
+        <DataTable @ref="dataTable" TItem="IndicadorLookupClass" Data="data" Count="count" Columns="columns" OnPaginate="OnPaginateAsync" OnSelect="OnSelectAsync" />
+    </div>
+</div>
+
+<div class="row" style="margin-top:10px">
+    <div class="col-md-12">
+        <button class="btn btn-default" @onclick="@(() => BlazoredModal.Close(ModalResult.Cancel()))" style="width:120px; border-radius:0px; border: 1px solid black; background-color:white; float:right"><span class="oi oi-circle-x"></span> Cancelar</button>
+    </div>
+</div>
+
+<Loader Visible="loaderVisible"/>
+
+@code 
+{
+    [CascadingParameter] 
+    public BlazoredModalInstance BlazoredModal { get; set; }
+
+    private DataTable<IndicadorLookupClass> dataTable;
+    private IList<IndicadorLookupClass> data;
+    private IList<DataTable<IndicadorLookupClass>.Column> columns;
+    private int count;
+    private string filter;
+    private string oldFilter;
+    private int page = 0;
+    private bool loaderVisible;
+
+    private async Task OnPaginateAsync(int page)
+    {
+        this.page = page;
+        await RefreshPageAsync();
+    }
+
+    private async Task OnSelectAsync(IndicadorLookupClass indicadorLookupClass)
+    {
+        BlazoredModal.Close(ModalResult.Ok<IndicadorLookupClass>(indicadorLookupClass));
+        await Task.CompletedTask;
+    }
+
+    private async Task RefreshPageAsync()
+    {
+        if ((filter?.Trim().Length ?? 0) < 3)
+        {
+            filter = oldFilter;
+        }
+
+        await PesquisarAsync();
+    }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        columns = new List<DataTable<IndicadorLookupClass>.Column>();
+        columns.Add(new DataTable<IndicadorLookupClass>.Column
+        {
+            PropertyName = "Identificador",
+            DisplayName = "Identificador"
+        });
+        columns.Add(new DataTable<IndicadorLookupClass>.Column
+        {
+            PropertyName = "Nome",
+            DisplayName = "Nome"
+        });
+        columns.Add(new DataTable<IndicadorLookupClass>.Column
+        {
+            PropertyName = "_TipoCalculo",
+            DisplayName = "Tipo de cálculo"
+        });
+        data = new List<IndicadorLookupClass>();
+    }
+
+    private async Task KeyDownPesquisarAsync(KeyboardEventArgs key)
+    {
+        if (key.Key.ToUpper() == "ENTER")
+        {
+            await PesquisarAsync();
+            oldFilter = new string(filter.ToArray());
+        }
+    }
+
+    private async Task PesquisarAsync()
+    {
+        if ((filter?.Trim().Length ?? 0) < 3)
+        {
+            notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Warning, Summary = "Alerta", Detail = "Insira no mínimo três (3) caracteres para pesquisar", Duration = 5000 });
+            return;
+        }
+
+        await BuscarNivelAsync();
+    }
+
+    private string GetFilter()
+    {
+        string filterAux = filter.Replace("\"", "'").Trim().TrimEnd('\\').ToUpper();
+
+        if (filterAux.Length < 3)
+        {
+            return "false";
+        }
+
+        string expression  = $"Corporativo == false && (Identificador.Trim().ToUpper().Contains(\"{filterAux}\") || Nome.Trim().ToUpper().Contains(\"{filterAux}\"))";
+        return System.Web.HttpUtility.UrlEncode(expression);
+    }
+
+    private async Task BuscarNivelAsync()
+    {
+        var http = await httpService.GetHttpAsync();
+        if (http != null)
+        {
+            SetVisibleLoader(true);
+            try
+            {
+                string expression = GetFilter();
+                var response = await http.GetAsync($"indicador?filter={expression}&page={page}&limit={dataTable.CountItemsInPage}");
+                if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
+                {
+                    throw new Exception(response.Content.ReadAsStringAsync().Result);
+                }
+
+                this.page = 0;
+                var result = await httpService.GetResultSetAsync<IndicadorLookupClass>(response);
+                data = result.Data;
+                count = result.Count; 
+            }
+            catch (Exception exc)
+            {
+                data = null;
+                count = 0;
+                Console.WriteLine(exc.Message);
+                notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = "Erro", Detail = "Um erro aconteceu ao realizar a pesquisa.", Duration = 5000 });
+            }
+            SetVisibleLoader(false);
+        }
+    }
+
+    private void SetVisibleLoader(bool visible)
+    {
+        loaderVisible = visible;
+        StateHasChanged();
+    }
+
+    public class IndicadorLookupClass
+    {
+        public long Id {get; set;}
+
+        public string Identificador {get; set;}
+
+        public string Nome {get; set;}
+
+        public int TipoCalculo {get; set;}
+
+        public string _TipoCalculo 
+        {
+            get
+            {
+                switch(TipoCalculo)
+                {
+                    case 1: return "Não calculado";
+                    case 2: return "Somenta meta";
+                    case 3: return "Somenta realizado";
+                    case 4: return "Meta e realizado calculados";
+                    default: throw new Exception("Tipo de cálculo inválido.");
+                }
+            }
+        }
+    }
+}

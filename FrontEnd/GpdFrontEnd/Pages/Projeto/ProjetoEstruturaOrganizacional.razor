@@ -1,6 +1,8 @@
 @page "/projeto-estrutura-organizacional"
 @using GpdFrontEnd.Components.Lookups.Projeto
 @using GpdFrontEnd.Components.Lookups.NivelOrganizacional
+@using GpdFrontEnd.Components.Lookups.Indicador
+@using GpdFrontEnd.Components.Lookups.Usuario
 @inject GpdFrontEnd.Services.System.HttpService httpService
 @inject NotificationService notificationService
 @inject IJSRuntime js
@@ -14,7 +16,7 @@
         @if (lkpProjeto?.GetValueOrNull() != null && ArvoreSelected != null)
         {
             <div class="col-md-9" style="margin-top: 25px">
-                <button hidden="@(ArvoreSelected.Tipo == 1)" style="cursor: pointer; color: orange; width: 35px; height: 38px; border: 1px solid gray;"><span class="oi oi-pencil"></span></button>
+                <button @onclick="EditarNivelAsync" hidden="@(ArvoreSelected.Tipo == 1)" style="cursor: pointer; color: orange; width: 35px; height: 38px; border: 1px solid gray;"><span class="oi oi-pencil"></span></button>
                 <button @onclick="ExcluirAsync" hidden="@(ArvoreSelected.Tipo == 1 || ArvorePossuiFilhos())" style="cursor: pointer; color: red; width: 35px; height: 38px; border: 1px solid gray;"><span class="oi oi-trash"></span></button>
                 <button @onclick="@(async () => await AvancarRetrocederAsync(false))" hidden="@(ArvoreSelected.Tipo == 1 || ArvoreSelected.Ordem == 1)" style="cursor: pointer; color: blue; width: 35px; height: 38px; border: 1px solid gray;"><span class="oi oi-arrow-circle-top"></span></button>
                 <button @onclick="@(async () => await AvancarRetrocederAsync(true))" hidden="@(ArvoreSelected.Tipo == 1 || ArvoreSelected.UltimoItem)" style="cursor: pointer; color: blue; width: 35px; height: 38px; border: 1px solid gray;"><span class="oi oi-arrow-circle-bottom"></span></button>
@@ -28,8 +30,8 @@
                         <div @onclick="AddGrupoAsync" hidden="@(!(ArvoreSelected.Tipo == 1 || ArvoreSelected.Tipo == 3))" class="dropdown-item"><span class="oi oi-people"></span> Grupo</div>
                         <div @onclick="AddDepartamentoAsync" hidden="@(!(ArvoreSelected.Tipo == 3 || ArvoreSelected.Tipo == 4))" class="dropdown-item"><span class="oi oi-home"></span> Departamento</div>
                         <div @onclick="AddCargoAsync" hidden="@(!(ArvoreSelected.Tipo == 3 || ArvoreSelected.Tipo == 4))" class="dropdown-item"><span class="oi oi-spreadsheet"></span> Cargo</div>
-                        <div hidden="@(ArvoreSelected.Tipo != 5)" class="dropdown-item"><span class="oi oi-person"></span> Usuário</div>
-                        <div hidden="@(ArvoreSelected.Tipo != 6)" class="dropdown-item"><span class="oi oi-dashboard"></span> Indicador</div>
+                        <div @onclick="AddUsuarioAsync" hidden="@(ArvoreSelected.Tipo != 5)" class="dropdown-item"><span class="oi oi-person"></span> Usuário</div>
+                        <div @onclick="AddIndicadorAsync" hidden="@(ArvoreSelected.Tipo != 6)" class="dropdown-item"><span class="oi oi-dashboard"></span> Indicador</div>
                     </div>
                 </div>
 
@@ -73,30 +75,80 @@
 <NivelOrganizacionalLookup @ref="lkpNivelGrupo" Background="true" Tipo="1" OnChange="AddGrupoChangeAsync"/>
 <NivelOrganizacionalLookup @ref="lkpNivelDepartamento" Background="true" Tipo="2" OnChange="AddDeparamentoChangeAsync"/>
 <NivelOrganizacionalLookup @ref="lkpNivelCargo" Background="true" Tipo="3" OnChange="AddCargoChangeAsync"/>
+<IndicadorLookup @ref="lkpIndicador" Background="true" OnChange="AddIndicadorChangeAsync"/>
+<UsuarioLookup @ref="lkpUsuario" Background="true" OnChange="AddUsuarioChangeAsync"/>
 
 @code
 {
     private NivelOrganizacionalLookup lkpNivelGrupo;
+    private UsuarioLookup lkpUsuario;
+    private IndicadorLookup lkpIndicador;
     private NivelOrganizacionalLookup lkpNivelDepartamento;
     private NivelOrganizacionalLookup lkpNivelCargo;
     private IList<DataTable<IndicadorCorporativo>.Column> columns;
     private IList<IndicadorCorporativo> data;
     private bool focus;
     private string show = string.Empty;
+    private bool inserirNivel;
+
+    private async Task AddUsuarioChangeAsync()
+    {
+        if (inserirNivel)
+        {
+            await AddItemAsync(lkpUsuario.GetValue(), 6);
+        }
+        else
+        {
+            await UpdateItemAsync(lkpUsuario.GetValue());
+        }
+    }
+
+    private async Task AddIndicadorChangeAsync()
+    {
+        if (inserirNivel)
+        {
+            await AddItemAsync(lkpIndicador.GetValue(), 7);
+        }
+        else
+        {
+            await UpdateItemAsync(lkpIndicador.GetValue());
+        }
+    }
 
     private async Task AddGrupoChangeAsync()
     {
-        await AddItemAsync(lkpNivelGrupo.GetValue(), 3);
+        if (inserirNivel)
+        {
+            await AddItemAsync(lkpNivelGrupo.GetValue(), 3);
+        }
+        else
+        {
+            await UpdateItemAsync(lkpNivelGrupo.GetValue());
+        }
     }
 
     private async Task AddDeparamentoChangeAsync()
     {
-        await AddItemAsync(lkpNivelDepartamento.GetValue(), 4);
+        if (inserirNivel)
+        {
+            await AddItemAsync(lkpNivelDepartamento.GetValue(), 4);
+        }
+        else
+        {
+            await UpdateItemAsync(lkpNivelDepartamento.GetValue());
+        }
     }
 
     private async Task AddCargoChangeAsync()
     {
-        await AddItemAsync(lkpNivelCargo.GetValue(), 5);
+        if (inserirNivel)
+        {
+            await AddItemAsync(lkpNivelCargo.GetValue(), 5);
+        }
+        else
+        {
+            await UpdateItemAsync(lkpNivelCargo.GetValue());
+        }
     }
 
     private async Task AddItemAsync(long idReferencia, int tipo)
@@ -132,13 +184,62 @@
                 Console.WriteLine(exc.Message);
                 notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = "Erro", Detail = "Um erro aconteceu ao gravar o registro.", Duration = 5000 });
             }
+            ArvoreSelected = null;
             SetVisibleLoader(false);
             await ChangeProjectAsync();
         }
     }
 
+    private async Task UpdateItemAsync(long idReferencia)
+    {
+        var http = await httpService.GetHttpAsync();
+        if (http != null)
+        {
+            SetVisibleLoader(true);
+            try
+            {
+                itens = null;
+                StateHasChanged();
+
+                var response = await http.GetAsync($"projeto-estrutura-organizacional/alterar-item/{ArvoreSelected.Id}/{idReferencia}/{ArvoreSelected.Tipo}");
+                if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
+                {
+                    throw new Exception(response.Content.ReadAsStringAsync().Result);
+                }
+
+                notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = "Sucesso", Detail = "Registro alterado com sucesso.", Duration = 5000 });
+            }
+            catch (Exception exc)
+            {
+                itens = null;
+                Console.WriteLine(exc.Message);
+                notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = "Erro", Detail = "Um erro aconteceu ao gravar o registro.", Duration = 5000 });
+            }
+            ArvoreSelected = null;
+            SetVisibleLoader(false);
+            await ChangeProjectAsync();
+        }
+    }
+
+    private async Task AddUsuarioAsync()
+    {
+        inserirNivel = true;
+        show = string.Empty;
+        StateHasChanged();
+        await lkpUsuario.PesquisarAsync();
+    }
+
+    private async Task AddIndicadorAsync()
+    {
+        inserirNivel = true;
+        show = string.Empty;
+        StateHasChanged();
+        await lkpIndicador.PesquisarAsync();
+    }
+
     private async Task AddGrupoAsync()
     {
+        inserirNivel = true;
         show = string.Empty;
         StateHasChanged();
         await lkpNivelGrupo.PesquisarAsync();
@@ -146,6 +247,7 @@
 
     private async Task AddDepartamentoAsync()
     {
+        inserirNivel = true;
         show = string.Empty;
         StateHasChanged();
         await lkpNivelDepartamento.PesquisarAsync();
@@ -153,9 +255,23 @@
 
     private async Task AddCargoAsync()
     {
+        inserirNivel = true;
         show = string.Empty;
         StateHasChanged();
         await lkpNivelCargo.PesquisarAsync();
+    }
+
+    private async Task EditarNivelAsync()
+    {
+        inserirNivel = false;
+        switch (ArvoreSelected.Tipo)
+        {
+            case 3: await lkpNivelGrupo.PesquisarAsync(); break;
+            case 4: await lkpNivelDepartamento.PesquisarAsync(); break;
+            case 5: await lkpNivelCargo.PesquisarAsync(); break;
+            case 6: await lkpUsuario.PesquisarAsync(); break;
+            case 7: await lkpIndicador.PesquisarAsync(); break;
+        }
     }
 
     private bool ArvorePossuiFilhos()
@@ -318,6 +434,7 @@
                 notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = "Erro", Detail = "Um erro aconteceu ao realizar esta operação.", Duration = 5000 });
             }
             SetVisibleLoader(false);
+            await BuscarIndicadoresCorporativosAsync();
         }
     }
 

@@ -136,9 +136,9 @@
        var result = await lookup.Result;
        if (!result.Cancelled)
        {
-         var usuario = ((NivelOrganizacionalLookupView.NivelOrganizacionalLookupClass) result.Data);
-         nomeNivel = usuario.Nome;
-         textValue = usuario.Id.ToString();
+         var nivel = ((NivelOrganizacionalLookupView.NivelOrganizacionalLookupClass) result.Data);
+         nomeNivel = nivel.Nome;
+         textValue = nivel.Id.ToString();
          ValidState();
        }
     }

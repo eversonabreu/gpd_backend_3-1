@@ -181,6 +181,7 @@
                         for (var subIndex = 0; subIndex < innerElements.length; subIndex++) {
                             if (innerElements[subIndex].tagName.toUpperCase() === "SPAN") {
                                 innerElements[subIndex].style.display = 'none';
+                                break;
                             }
                         }
                     }
@@ -190,6 +191,7 @@
 
     </script>
     <script src="_content/Radzen.Blazor/Radzen.Blazor.js"></script>
+    <script src="inputfile.js"></script>
 </body>
 
 </html>

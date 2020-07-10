@@ -6,7 +6,7 @@
 <div class="form-group" hidden="@Background">
     <label>@Label</label>
     <div class="input-group">
-        <input type="text" @bind="nomeUsuario" class="form-control" readonly="@Readonly" disabled="@(true)" placeholder="@PlaceHolder" style="border-right:0px; background-color:#dedede; border: 1px solid @(Valid ? "#ced4da" : "#F7819F");" />
+        <input type="text" @bind="identificador" class="form-control" readonly="@Readonly" disabled="@(true)" placeholder="@PlaceHolder" style="border-right:0px; background-color:#dedede; border: 1px solid @(Valid ? "#ced4da" : "#F7819F");" />
         <div class="input-group-prepend">
             <div class="input-group-text" style="padding-left: 0px; padding-right: 2px; padding-bottom: 0px;">
                 <button hidden="@Readonly" @onclick="Limpar" class="btn btn-default" style="cursor: pointer; margin-top: -7px; width: 35px; height: 37px; border-radius: 0px; margin-right: -2px;">
@@ -30,7 +30,7 @@
     private string oldValue;
     private string textValue = string.Empty;
 
-    private string nomeUsuario;
+    private string identificador;
 
     [Parameter]
     public long? Value
@@ -41,34 +41,36 @@
             {
                 textValue = value.Value.ToString();
                 oldValue = textValue;
-                Task.Run(async () => await BuscarUsuarioAsync());
             }
         }
     }
 
-    private async Task BuscarUsuarioAsync()
+    public async Task BuscarIndicadorAsync()
     {
-
-        var http = await httpService.GetHttpAsync();
-        if (http != null)
+        if (textValue != "0")
         {
-            try
+            var http = await httpService.GetHttpAsync();
+            if (http != null)
             {
-                long id = long.Parse(textValue);
-                var response = await http.GetAsync($"usuario/id/{id}");
-                if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
+                try
                 {
-                    throw new Exception(response.Content.ReadAsStringAsync().Result);
+                    long id = long.Parse(textValue);
+                    var response = await http.GetAsync($"indicador/id/{id}");
+                    if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
+                    {
+                        throw new Exception(response.Content.ReadAsStringAsync().Result);
+                    }
+                    var content = await response.Content.ReadAsStringAsync();
+                    var result = JsonSerializer.Deserialize<IndicadorLookupView.IndicadorLookupClass>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    identificador = result.Identificador;
+                    TipoCalculo = result.TipoCalculo;
+                    textValue = result.Id.ToString();
                 }
-                var content = await response.Content.ReadAsStringAsync();
-                var result = JsonSerializer.Deserialize<UsuarioLookupView.UsuarioLookupClass>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                nomeUsuario = $"{result.Nome} ({result.Cpf})";
-                textValue = result.Id.ToString();
-            }
-            catch (Exception exc)
-            {
-                Console.WriteLine(exc.Message);
-                notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = "Erro", Detail = "Um erro aconteceu ao realizar a pesquisa. (Lookup de usuário)", Duration = 5000 });
+                catch (Exception exc)
+                {
+                    Console.WriteLine(exc.Message);
+                    notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = "Erro", Detail = "Um erro aconteceu ao realizar a pesquisa. (Lookup de nível organizacional)", Duration = 5000 });
+                }
             }
         }
 
@@ -89,14 +91,16 @@
 
     public bool Valid;
 
+    public int TipoCalculo;
+
     [Parameter]
     public string Label { get; set; }
 
     [Parameter]
-    public string PlaceHolder { get; set; }
+    public bool Background { get; set; }
 
     [Parameter]
-    public bool Background { get; set; }
+    public string PlaceHolder { get; set; }
 
     [Parameter]
     public bool Readonly { get; set; }
@@ -115,21 +119,23 @@
            Position = Blazored.Modal.ModalPosition.Center
        };
 
-       var lookup = Modal.Show<UsuarioLookupView>("Consulta de usuários", options);
+       var lookup = Modal.Show<IndicadorLookupView>("Consulta de indicador", options);
        var result = await lookup.Result;
        if (!result.Cancelled)
        {
-         var usuario = ((UsuarioLookupView.UsuarioLookupClass) result.Data);
-         nomeUsuario = $"{usuario.Nome} ({usuario.Cpf})";
-         textValue = usuario.Id.ToString();
+         var indicador = ((IndicadorLookupView.IndicadorLookupClass) result.Data);
+         identificador = indicador.Identificador;
+         textValue = indicador.Id.ToString();
+         TipoCalculo = indicador.TipoCalculo;
          ValidState();
        }
     }
 
     private void Limpar()
     {
-        nomeUsuario = string.Empty;
+        identificador = string.Empty;
         textValue = null;
+        TipoCalculo = 0;
         ValidState();
     }
 
@@ -147,7 +153,7 @@
         OnChange?.Invoke();
     }
 
-    public long GetValue() => textValue == "0" ? throw new Exception("Usuário inválido.") : long.Parse(textValue);
+    public long GetValue() => textValue == "0" ? throw new Exception("Nível organizacional inválido.") : long.Parse(textValue);
 
     public long? GetValueOrNull() => (string.IsNullOrWhiteSpace(textValue) || textValue == "0") ? null : (long?) GetValue();
 
@@ -159,5 +165,13 @@
         }
 
         base.OnAfterRender(firstRender);
+    }
+
+    public void Clear()
+    {
+        textValue = string.Empty;
+        identificador = string.Empty;
+        TipoCalculo = 0;
+        ValidState();
     }
 }

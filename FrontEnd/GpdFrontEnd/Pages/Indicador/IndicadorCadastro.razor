@@ -138,7 +138,7 @@
             </div>
 
             <div class="col-md-3">
-                <SelectOption @ref="SelTipoCalculo" OnSelect="SelecaoTipoCalculo" Label="Tipo de cálculo" Required="true" AllowInvalidOption="true" Value="@indicador.TipoCalculo" Options="optionsTipoCalculo" />
+                <SelectOption @ref="SelTipoCalculo" OnSelect="SelecaoTipoCalculoAsync" Label="Tipo de cálculo" Required="true" AllowInvalidOption="true" Value="@indicador.TipoCalculo" Options="optionsTipoCalculo" />
             </div>
 
         </div>
@@ -360,10 +360,11 @@
         StateHasChanged();
     }
 
-    private void SelecaoTipoCalculo(long valor)
+    private async Task SelecaoTipoCalculoAsync(long valor)
     {
         indicador.TipoCalculo = (int) valor;
         StateHasChanged();
+        await Task.CompletedTask;
     }
 
     private async Task AbrirModalFormulaAsync()

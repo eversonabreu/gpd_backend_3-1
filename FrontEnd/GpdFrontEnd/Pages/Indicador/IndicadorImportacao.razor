@@ -1,0 +1,324 @@
+@page "/indicador-importacao"
+@inject GpdFrontEnd.Services.System.HttpService httpService
+@inject NotificationService notificationService
+
+<style>
+    .file-row {
+    background-color: #e4e4e4;
+    padding: 1rem 1.5rem;
+    margin-top: 1rem;
+    border-radius: 0.6rem;
+    color: #555;
+    display: flex;
+    align-items: center;
+}
+
+    .file-row h2 {
+        margin: 0.3rem 0 0.6rem 0;
+        font-weight: bold;
+        color: black;
+        font-size: 1.1rem;
+    }
+
+    .file-row > div {
+        flex-grow: 1;
+    }
+
+    .file-row button {
+        padding: 0.5rem 1rem;
+    }
+
+.drag-drop-zone {
+    border: 3px dashed #e68710;
+    padding: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #eee;
+    box-shadow: inset 0 0 8px rgba(0,0,0,0.2);
+    color: #aeaeae;
+    font-size: 1.5rem;
+    cursor: pointer;
+    margin: 1.5rem 0 2rem 0;
+    position: relative;
+}
+
+    .drag-drop-zone:hover {
+        background-color: #f5f5f5;
+    }
+
+    .drag-drop-zone input[type=file] {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+    }
+</style>
+
+@if (lancamentos?.Any() ?? false)
+{
+    <div class="row" style="text-align: center">
+        <div class="col-md-8 mx-auto">
+            <button @onclick="ImportarAsync" class="btn btn-info" style="width:120px; border-radius:0px"><span class="oi oi-arrow-circle-top"></span> Importar</button>
+            &nbsp;&nbsp;
+            <button class="btn btn-default" @onclick="Cancelar" style="width:120px; border-radius:0px; border: 1px solid black; background-color:white"><span class="oi oi-circle-x"></span> Cancelar</button>
+        </div>
+    </div>
+}
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="drag-drop-zone">
+            <InputFile OnChange="ViewFile"  />
+            @texto
+        </div>
+    </div>
+</div>
+
+<div class="row" style="text-align:center !important">
+    <div class="col-md-8 mx-auto">
+        <small class="form-text text-muted">Utilize arquivos com extensão ".csv" ou ".txt" com no máximo 5MB</small>
+    </div>
+</div>
+
+<div class="row" style="text-align:center !important">
+    <div class="col-md-8 mx-auto">
+        <small class="form-text text-muted">O delimitador deve ser ponto-e-virgula, e para separador decimal utilize virgula</small>
+    </div>
+</div>
+
+<div class="row" style="text-align:center !important">
+    <div class="col-md-8 mx-auto">
+        <small class="form-text text-muted">O mês deve estar em formato numérico, com valor entre um (1) e doze (12)</small>
+    </div>
+</div>
+
+<div class="row" style="text-align:center !important">
+    <div class="col-md-8 mx-auto">
+        <small class="form-text text-muted">A ordem dos campos deve ser: "ID do Projeto, Identificador, Ano, Mês, Valor da Meta, Valor do Realizado"</small>
+    </div>
+</div>
+
+<div class="card" style="margin-top: 10px">
+    <div class="card-header">Resultado da importação</div>
+    <div class="card-body">
+        <div class="row" style="text-align:center !important">
+            <div class="col-md-8 mx-auto">
+                <p class="form-text text-muted" style="color:red !important">@status</p>
+            </div>
+        </div>
+
+        <div class="row" style="text-align:center !important">
+            <div class="col-md-8 mx-auto">
+                @resultado
+            </div>
+        </div>
+    </div>
+</div>
+
+<Loader Visible="loaderVisible"/>
+
+@code
+{
+    private const string textoPadrao = "Arraste um arquivo ou clique aqui";
+    private string texto = textoPadrao;
+    private const int maxFileSize = 5 * 1024 * 1024;
+    private MarkupString status = new MarkupString();
+    private MarkupString resultado = new MarkupString();
+    private IList<ContentFile> lancamentos;
+    private bool loaderVisible;
+
+    private void SetVisibleLoader(bool visible)
+    {
+        loaderVisible = visible;
+        StateHasChanged();
+    }
+
+    private async Task ImportarAsync()
+    {
+        var http = await httpService.GetHttpAsync();
+        if (http != null)
+        {
+            SetVisibleLoader(true);
+            try
+            {
+                var response = await http.PostAsJsonAsync("indicador-lancamento/gerar-lancamentos", lancamentos);
+                var result = await httpService.GetObjectAsync<ImpotacaoLancamentosDto>(response);
+                if (result.Sucesso)
+                {
+                    resultado = new MarkupString(result.Mensagem);
+                    notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Success, Summary = "Sucesso", Detail = "Dados importados com sucesso", Duration = 6000 });
+                }
+                else
+                {
+                    status = new MarkupString(result.Mensagem);
+                    notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = "Erro", Detail = "Erro na importação. Verifique as mensagens", Duration = 6000 });
+                }
+            }
+            catch (Exception exc)
+            {
+                status = new MarkupString(exc.Message);
+                notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = "Erro", Detail = "Erro na importação. Verifique as mensagens", Duration = 6000 });
+            }
+
+            texto = textoPadrao;
+            lancamentos = null;
+            SetVisibleLoader(false);
+        }
+    }
+
+    private void Cancelar()
+    {
+        texto = textoPadrao;
+        status = new MarkupString();
+        resultado = new MarkupString();
+        lancamentos = null;
+        StateHasChanged();
+    }
+
+    private async Task ViewFile(IFileListEntry[] files)
+    {
+        Cancelar();
+        var file = files.FirstOrDefault();
+        if (file == null)
+        {
+            StateHasChanged();
+            texto = textoPadrao;
+            return;
+        }
+        else if (file.Size > maxFileSize)
+        {
+            status = new MarkupString("Arquivo maior que 5MB");
+            texto = textoPadrao;
+            StateHasChanged();
+        }
+        else if (!(file.Name.ToUpper().EndsWith(".CSV") || file.Name.ToUpper().EndsWith(".TXT")))
+        {
+            status = new MarkupString("Arquivo deve ter a extensão '.csv' ou '.txt'");
+            texto = textoPadrao;
+            StateHasChanged();
+        }
+        else
+        {
+            texto = "Carregando...";
+            string nameFile;
+            var builder = new System.Text.StringBuilder();
+            lancamentos = new List<ContentFile>();
+            using (var reader = new System.IO.StreamReader(file.Data))
+            {
+                nameFile = file.Name;
+                int numeroLinha = 0;
+                string linha = string.Empty;
+                while ((linha = await reader.ReadLineAsync()) != null)
+                {
+                    numeroLinha++;
+                    try
+                    {
+                        string[] colunas = linha.Split(";");
+                        var fileReader = new ContentFile();
+                        fileReader.Identificador = (colunas[1] ?? string.Empty).Trim().ToUpper();
+                        var erros = new System.Text.StringBuilder();
+
+                        if (!long.TryParse(colunas[0], out long idProjeto))
+                        {
+                            erros.Append(" O Id de projeto não é válido. ");
+                        }
+                        else
+                        {
+                            fileReader.IdProjeto = idProjeto;
+                        }
+
+                        if (fileReader.Identificador.Length == 0 || fileReader.Identificador.Length > 30)
+                        {
+                            erros.Append(" O identificador não é válido. ");
+                        }
+
+                        if (!int.TryParse(colunas[2], out int ano) || ano < 2015)
+                        {
+                            erros.Append(" O ano não é válido. ");
+                        }
+                        else
+                        {
+                            fileReader.Ano = ano;
+                        }
+
+                        if (!int.TryParse(colunas[3], out int mes) || mes < 1 || mes > 12)
+                        {
+                            erros.Append(" O mês não é válido. ");
+                        }
+                        else
+                        {
+                            fileReader.Mes = mes;
+                        }
+
+                        if (!decimal.TryParse(colunas[4], System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.GetCultureInfo("pt-BR"), out decimal valorMeta) || valorMeta < -99999999999999999.99m || valorMeta > 99999999999999999.99m)
+                        {
+                            erros.Append(" O valor da meta não é válido. ");
+                        }
+                        else
+                        {
+                            fileReader.ValorMeta = valorMeta;
+                        }
+
+                        if (!decimal.TryParse(colunas[5], System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.GetCultureInfo("pt-BR"), out decimal valorRealizado) || valorRealizado < -99999999999999999.99m || valorRealizado > 99999999999999999.99m)
+                        {
+                            erros.Append(" O valor do realizado não é válido. ");
+                        }
+                        else
+                        {
+                            fileReader.ValorRealizado = valorRealizado;
+                        }
+
+                        if (erros.Length > 1)
+                        {
+                            builder.AppendLine($"A linha {numeroLinha} está com problema(s). '{erros.ToString()}''.");
+                        }
+                        else
+                        {
+                            lancamentos.Add(fileReader);
+                        }
+                    }
+                    catch
+                    {
+                       builder.AppendLine($"A linha {numeroLinha} está com algum problema. Verifique os dados desta linha e certifique-se que o delimitador é o ponto-e-virgula.");
+                    }
+                }
+            }
+
+            if (builder.Length > 1)
+            {
+                status = new MarkupString(builder.ToString().Replace(System.Environment.NewLine, "<br>"));
+                texto = textoPadrao;
+            }
+            else if (lancamentos.Any())
+            {
+                texto = nameFile;
+            }
+            else
+            {
+                status = new MarkupString("O arquivo está vazio.");
+                texto = textoPadrao;
+            }
+
+            StateHasChanged();
+        }
+    }
+
+    class ContentFile
+    {
+        public long IdProjeto { get; set; }
+        public string Identificador { get; set; }
+        public int Ano { get; set; }
+        public int Mes { get; set; }
+        public decimal ValorMeta { get; set; }
+        public decimal ValorRealizado { get; set; }
+    }
+
+    struct ImpotacaoLancamentosDto
+    {
+        public bool Sucesso { get; set; }
+
+        public string Mensagem { get; set; }
+    }
+}
