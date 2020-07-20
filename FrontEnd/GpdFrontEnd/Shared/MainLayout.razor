@@ -70,6 +70,11 @@
         {
             conteudo = "Importação de valores de indicadores ";
         }
+        else if (uri.StartsWith("dashboard"))
+        {
+            conteudo = "Painel de indicadores ";
+            padding = "padding: 0 !important;";
+        }
 
         if (conteudo != null)
         {

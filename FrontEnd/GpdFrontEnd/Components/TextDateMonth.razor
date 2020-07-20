@@ -1,7 +1,7 @@
 <div class="form-group">
     <label>@Label</label>
     <div class="input-group">
-        <input type="text" class="form-control" maxlength="10"
+        <input type="text" class="form-control" maxlength="7"
                style="border: 1px solid @(Valid ? "#ced4da" : "#F7819F"); background-color: @(Valid ? "white" : "#F6CED8")"
                 @bind-value="textValue" placeholder="@Placeholder" 
                @bind-value:event="oninput" onpaste="return false" @onkeydown="KeyDown" @onkeydown:preventDefault="blockDigit" @onkeydown:stopPropagation="blockDigit"
@@ -46,22 +46,8 @@
                         </div>
                     </div>
                     <div class="row" style="margin-left:5px">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>Dia</label>
-                                <select class="form-control" @onblur="OnBlur" @bind="dia" @onclick="ObterDiaSemana">
-                                    @for (int dia = 1; dia <= ultimoDiaMes; dia++)
-                                    {
-                                        <option value="@dia">@dia</option>
-                                    }
-                                </select>
-                                <small class="form-text text-muted">@diaSemana</small>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
+                        <div class="col-md-6 mx-auto">
                             <button class="btn btn-primary" style="margin-top:24px; margin-left:-20px;width:123px" @onclick="Select">Selecionar</button>
-                        </div>
-                        <div>
                         </div>
                     </div>
                 </div>
@@ -77,14 +63,11 @@
         private string show = string.Empty;
         private int ano = DateTime.Now.Year;
         private byte mes = (byte) DateTime.Now.Month;
-        private byte dia;
-        private byte ultimoDiaMes;
-        private string diaSemana;
         private string message;
         private string oldValue;
-        private string textValue = string.Empty;
+        private string textValue = DateTime.Now.ToString("MM/yyyy");
         private bool blockDigit;
-        public bool Valid { get; private set; }
+        public bool Valid { get; private set; } = true;
 
         [Parameter]
         public bool Required { get; set; }
@@ -108,13 +91,16 @@
         public DateTime MinValue { get; set; } = DateTime.MinValue;
 
         [Parameter]
+        public Func<byte, int, Task> OnSelect { get; set; }
+
+        [Parameter]
         public DateTime? Value
         {
             set
             {
                 if (value.HasValue && oldValue != OldValue(value))
                 {
-                    textValue = value.Value.ToString("dd/MM/yyyy");
+                    textValue = value.Value.ToString("MM/yyyy");
                     if (value.Value.Year == 1)
                     {
                         textValue = string.Empty;
@@ -141,7 +127,7 @@
             if (!blockDigit)
             {
                 blockDigit = true;
-                if (textValue.Length == 1 || textValue.Length == 4)
+                if (textValue.Length == 1)
                 {
                     textValue = textValue + digit + '/';
                 }
@@ -173,7 +159,7 @@
 
                     try
                     {
-                        string anoStr = textValue.Split('/')[2];
+                        string anoStr = textValue.Split('/')[1];
                         ano = int.Parse(anoStr);
 
                         if (ano < 1000)
@@ -191,7 +177,7 @@
                         throw new Exception();
                     }
 
-                    DateTime value = Convert.ToDateTime(textValue, System.Globalization.CultureInfo.GetCultureInfo("pt-BR"));
+                    DateTime value = Convert.ToDateTime("01/" + textValue, System.Globalization.CultureInfo.GetCultureInfo("pt-BR"));
 
                     if (value > MaxValue || value < MinValue)
                     {
@@ -221,7 +207,7 @@
         {
             if (value.HasValue)
             {
-                return value.Value.ToString("dd/MM/yyyy");
+                return value.Value.ToString("MM/yyyy");
             }
 
             return string.Empty;
@@ -230,8 +216,13 @@
         private void Select()
         {
             show = string.Empty;
-            textValue = new DateTime(ano, mes, dia).ToString("dd/MM/yyyy");
+            textValue = new DateTime(ano, mes, 1).ToString("MM/yyyy");
             ValidState();
+
+            if (Valid)
+            {
+                OnSelect?.Invoke(mes, ano);
+            }
         }
 
         private void OnShow()
@@ -255,60 +246,15 @@
             }
         }
 
-        private void OnSelectAno() => ObterUltimoDiaMes();
+        private void OnSelectAno() => StateHasChanged();
 
-        private void OnSelectMes() => ObterUltimoDiaMes();
+        private void OnSelectMes() => StateHasChanged();
 
-        private void ObterUltimoDiaMes()
-        {
-            if (mes > 0 && ano > 0)
-            {
-                switch (mes)
-                {
-                    case 1:
-                    case 3:
-                    case 5:
-                    case 7:
-                    case 8:
-                    case 10:
-                    case 12: ultimoDiaMes = 31; break;
-                    case 4:
-                    case 6:
-                    case 9:
-                    case 11: ultimoDiaMes = 30; break;
-                    default: if (DateTime.IsLeapYear(ano)) ultimoDiaMes = 29; else ultimoDiaMes = 28; break;
-                }
+        public byte GetMonth() => (byte) DateTime.Parse(textValue).Month;
 
-                dia = 1;
-                ObterDiaSemana();
-            }
-        }
+        public byte? GetMonthOrNull() => string.IsNullOrWhiteSpace(textValue) ? null : (byte?) GetMonth();
 
-        private void ObterDiaSemana()
-        {
-            var dateTime = new DateTime(ano, mes, dia);
-            switch (dateTime.DayOfWeek)
-            {
-                case DayOfWeek.Sunday: diaSemana = "Domingo"; break;
-                case DayOfWeek.Saturday: diaSemana = "Sábado"; break;
-                case DayOfWeek.Friday: diaSemana = "Sexta-feira"; break;
-                case DayOfWeek.Thursday: diaSemana = "Quinta-feira"; break;
-                case DayOfWeek.Wednesday: diaSemana = "Quarta-feira"; break;
-                case DayOfWeek.Tuesday: diaSemana = "Terça-feira"; break;
-                default: diaSemana = "Segunda-feira"; break;
-            }
+        public int GetYear() => DateTime.Parse(textValue).Year;
 
-            StateHasChanged();
-        }
-
-        public DateTime GetValue() => DateTime.Parse(textValue);
-
-        public DateTime? GetValueOrNull() => string.IsNullOrWhiteSpace(textValue) ? null : (DateTime?) GetValue();
-
-        protected override void OnInitialized()
-        {
-            ObterUltimoDiaMes();
-            dia = (byte) DateTime.Now.Day;
-            ObterDiaSemana();
-        }
+        public int? GetYearOrNull() => string.IsNullOrWhiteSpace(textValue) ? null : (int?) GetYear();
     }
