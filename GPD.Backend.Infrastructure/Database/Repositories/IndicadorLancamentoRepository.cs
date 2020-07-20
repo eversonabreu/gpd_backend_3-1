@@ -51,7 +51,7 @@ namespace GPD.Backend.Infrastructure.Database.Repositories
                 {
                     builderErros.AppendLine($"A linha {numeroLinha} está com problema(s): '{erros.ToString()}'.");
                 }
-                else
+                else if (builderErros.Length == 0)
                 {
                     var lancamento = databaseContext.IndicadorLancamentos.FirstOrDefault(it => it.IdProjeto == item.IdProjeto && it.IdIndicador == indicador.Id && it.Ano == item.Ano && it.Mes == item.Mes);
                     decimal valorMeta = 0.00m;

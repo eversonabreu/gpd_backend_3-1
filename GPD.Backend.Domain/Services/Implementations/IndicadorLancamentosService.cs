@@ -94,7 +94,7 @@ namespace GPD.Backend.Domain.Services.Implementations
                 }
             }
 
-            string resultado = retorno.ToString(CultureInfo.GetCultureInfo("en-US"));
+            string resultado = retorno.ToString(CultureInfo.GetCultureInfo("en-US")).Replace(",", string.Empty);
             return resultado;
         }
 
@@ -265,39 +265,26 @@ namespace GPD.Backend.Domain.Services.Implementations
             if (indicadores?.Any() ?? false)
             {
                 long idProjetoCorporativo = indicadores.First().IdProjeto;
-                var listaIndicadores = new List<Task>();
 
-                decimal valorPonderadoCorporativo = 0m;
-
-                listaIndicadores.Add(Task.Run(async () =>
-                {
-                    valorPonderadoCorporativo = ObterValorPonderadoCorporativo(idProjetoCorporativo, mesInicial, anoInicial, mesFinal, anoFinal);
-                    await Task.CompletedTask;
-                }));
+                decimal valorPonderadoCorporativo = ObterValorPonderadoCorporativo(idProjetoCorporativo, mesInicial, anoInicial, mesFinal, anoFinal);
 
                 foreach (var ind in indicadores)
                 {
                     long idProjeto = ind.IdProjeto;
                     long idIndicador = ind.IdIndicador.Value;
-                    listaIndicadores.Add(Task.Run(async () =>
+                    var resultado = ObterResultadosPorIndicador(idProjeto, idIndicador, mesInicial, anoInicial, mesFinal, anoFinal);
+
+                    if (environmentService.PossuiLimiteSuperiorAtingimento && resultado.ValorAtingimento > environmentService.ValorLimiteSuperiorAtingimento)
                     {
-                        var resultado = ObterResultadosPorIndicador(idProjeto, idIndicador, mesInicial, anoInicial, mesFinal, anoFinal);
+                        resultado.ValorAtingimento = environmentService.ValorLimiteSuperiorAtingimento;
+                    }
+                    else if (environmentService.PossuiLimiteInferiorAtingimento && resultado.ValorAtingimento < environmentService.ValorLimiteInferiorAtingimento)
+                    {
+                        resultado.ValorAtingimento = environmentService.ValorLimiteInferiorAtingimento;
+                    }
 
-                        if (environmentService.PossuiLimiteSuperiorAtingimento && resultado.ValorAtingimento > environmentService.ValorLimiteSuperiorAtingimento)
-                        {
-                            resultado.ValorAtingimento = environmentService.ValorLimiteSuperiorAtingimento;
-                        }
-                        else if (environmentService.PossuiLimiteInferiorAtingimento && resultado.ValorAtingimento < environmentService.ValorLimiteInferiorAtingimento)
-                        {
-                            resultado.ValorAtingimento = environmentService.ValorLimiteInferiorAtingimento;
-                        }
-
-                        retorno.Indicadores.Add(resultado);
-                        await Task.CompletedTask;
-                    }));
+                    retorno.Indicadores.Add(resultado);
                 }
-
-                Task.WaitAll(listaIndicadores.ToArray());
 
                 decimal somaPesos = 0m;
                 decimal valorPonderadoIndividual = 0m;
@@ -380,6 +367,23 @@ namespace GPD.Backend.Domain.Services.Implementations
             }
 
             return retorno;
+        }
+
+        public IList<IndicadorLancamentosResultado> ObterResultadosPorProjeto(long idProjeto, int mesInicial, int anoInicial, int mesFinal, int anoFinal)
+        {
+            var result = new List<IndicadorLancamentosResultado>();
+            var indicadores = projetoEstruturaOrganizacionalRepository.Filter(item => item.IdProjeto == idProjeto && item.Tipo == TipoProjetoEstruturaOrganizacional.Corporativo);
+
+            if (indicadores?.Any() ?? false)
+            {
+                foreach (var item in indicadores)
+                {
+                    var resultado = ObterResultadosPorIndicador(idProjeto, item.IdIndicador.Value, mesInicial, anoInicial, mesFinal, anoFinal);
+                    result.Add(resultado);
+                }
+            }
+
+            return result;
         }
     }
 

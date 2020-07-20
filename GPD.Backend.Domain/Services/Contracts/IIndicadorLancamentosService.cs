@@ -8,14 +8,18 @@ namespace GPD.Backend.Domain.Services.Contracts
 
         UsuarioIndicadorLancamentosResultado ObterResultadosParaUsuario(long idProjetoEstruturaOrganizacional, long idUsuario, int mesInicial, int anoInicial, int mesFinal, int anoFinal);
 
+        IList<IndicadorLancamentosResultado> ObterResultadosPorProjeto(long idProjeto, int mesInicial, int anoInicial, int mesFinal, int anoFinal);
+
         IndicadorLancamentosEvolucaoMensal ObterResultadosPorIndicadorEvolucaoMensalSimples(long idProjeto, long idIndicador, int mesInicial, int anoInicial, int mesFinal, int anoFinal);
     }
 
-    public struct IndicadorLancamentosResultado
+    public class IndicadorLancamentosResultado
     {
         public string NomeIndicador { get; set; }
 
         public string UnidadeMedida { get; set; }
+
+        public string Script { get; set; }
 
         public decimal ValorMeta { get; set; }
 
@@ -33,6 +37,12 @@ namespace GPD.Backend.Domain.Services.Contracts
         public decimal ValorPonderadoCorporativo { get; set; }
 
         public decimal ValorPonderadoFinal { get; set; }
+
+        public string Script1 { get; set; }
+
+        public string Script2 { get; set; }
+
+        public string Script3 { get; set; }
 
         public IList<IndicadorLancamentosResultado> Indicadores { get; set; }
     }
