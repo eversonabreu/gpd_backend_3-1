@@ -8,7 +8,7 @@
     <button class="btn btn-primary" style="background-color: #007bff !important" @onclick="AdicionarUnidadeMedida"><span class="oi oi-plus"></span> Adicionar unidade de medida</button>
 </nav>           
 
-<div class="row" style="margin-top:10px"> 
+<div class="row" style="margin-top:10px; margin-left: 0px; margin-right: 0px"> 
     <div class="col-md-8 mx-auto">
         <div class="input-group">
             <input @bind-value="filter" @bind-value:event="oninput" @onkeydown="KeyDownPesquisarAsync" class="form-control" type="search" placeholder="Digite aqui para pesquisar..." aria-label="Search" style="border-right: none;">
@@ -19,7 +19,7 @@
     </div>
 </div>
 
-<div class="row" style="margin-top:20px"> 
+<div class="row" style="margin-top:20px; margin-left: 0px; margin-right: 0px"> 
     <div class="col-md-10 mx-auto">
         <DataTable @ref="dataTable" TItem="UnidadeMedida" Data="data" Count="count" Columns="columns" OnPaginate="OnPaginateAsync" OnEdit="OnEditUnidadeMedida" OnDelete="OnDeleteUnidadeMedidaAsync"/>
     </div>

@@ -9,19 +9,25 @@
         <div class="col-md-3">
             <ProjetoLookup @ref="lkpProjeto" Label="Projeto" PlaceHolder="Selecione um projeto" OnChange="ChangeProjectAsync"/>
         </div>
+        <div class="col-md-3">
+            <TextDateMonth @ref="mesAnoInicio" Readonly="true" Required="true" Value="dataInicial" Label="Mês/Ano (início)" Placeholder="Selecione o mês/ano de início" OnSelect="OnSelectMesAnoInicioAsync"/>
+        </div>
+        <div class="col-md-3">
+            <TextDateMonth @ref="mesAnoTermino" Readonly="true" Required="true" Value="dataFinal" Label="Mês/Ano (término)" Placeholder="Selecione o mês/ano de término" OnSelect="OnSelectMesAnoTerminoAsync"/>
+        </div>
     </div>
 </div>
 
 <div style="width: auto">
 		
-	<div style="float:left; width: 40%; overflow-x:auto; height: calc(100vh - 122px); background-color: white">
+	<div style="float:left; width: 25%; overflow-x:auto; height: calc(100vh - 122px); background-color: white">
 
         @if (lkpProjeto?.GetValueOrNull() != null)
         {
-            <div class="row">
+            <div class="row" style="margin-right:0px; margin-left: 0px">
                 <div class="col-md-12" style="margin-bottom: 16px">
                     <RadzenTree Change="@OnChange" Data="@itens" Expand="@Expandir" Style="width: auto; height: auto">
-                        <RadzenTreeLevel Text="@GetTextForNode" Template="@Template" Expanded="@(data =>  ((ProjetoEstruturaOrganizacionalArvore) data).Expanded)" />
+                        <RadzenTreeLevel Text="@GetTextForNode" Template="@Template" Expanded="@(data =>  false)" />
                     </RadzenTree>
                 </div>
             </div>
@@ -29,9 +35,106 @@
 
 	</div>
 		
-	<div style="float:left; width: 60%; overflow-x:auto; height: calc(100vh - 122px); background-color: white">
+	<div style="float:left; width: 75%; overflow-x:auto; height: calc(100vh - 122px); background-color: white">
 		
+        @while (indexCard < (Apresentacao?.Count ?? 0))
+        {
 
+            if (indexCard == 0 && usuarioResultados != null)
+            {
+                <div class="row" style="margin-right:0px; margin-left: 0px; margin-top: 20px">
+                    <div class="col-md-4">
+                        <div class="card" style="padding-bottom: 0px">
+                            <h5>Ponderado individual</h5><br/>
+                            <small>Atingimento (%)</small>
+                            <div class="card-body" style="padding:0">
+                                <div class="table-responsive" style="align-items: center; justify-content: center; text-align: center; display: flex; width: auto;">
+                                    <div id="div_indicador_script1"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card" style="padding-bottom: 0px">
+                            <h5>Ponderado corporativo</h5><br/>
+                            <small>Atingimento (%)</small>
+                            <div class="card-body" style="padding:0">
+                                <div class="table-responsive" style="align-items: center; justify-content: center; text-align: center; display: flex; width: auto;">
+                                    <div id="div_indicador_script2"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card" style="padding-bottom: 0px">
+                            <h5>Ponderado final</h5><br/>
+                            <small>Atingimento (%)</small>
+                            <div class="card-body" style="padding:0">
+                                <div class="table-responsive" style="align-items: center; justify-content: center; text-align: center; display: flex; width: auto;">
+                                    <div id="div_indicador_script3"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <div class="row" style="margin-right:0px; margin-left: 0px; margin-top: 20px">
+
+                @{int qtdCards = 0;}
+                @while (qtdCards <= 2 && indexCard < Apresentacao.Count)
+                {
+                    <div class="col-md-4">
+                        <div class="card" style="padding-bottom: 0px">
+                            <h5>@Apresentacao[indexCard].NomeIndicador</h5>
+                            <div class="card-body" style="padding:0">
+                                <small>Unidade de medida: @Apresentacao[indexCard].UnidadeMedida</small><br/>
+                                <small>Percentual de peso: @Apresentacao[indexCard].Peso</small><br/>
+                                <small>Meta: @Apresentacao[indexCard].ValorMeta</small><br/>
+                                <small>Realizado: @Apresentacao[indexCard].ValorRealizado</small><br/>
+                                <small>Atingimento: @Apresentacao[indexCard].ValorAtingimento</small>
+                                <div class="table-responsive" style="align-items: center; justify-content: center; text-align: center; display: flex; width: auto;">
+                                    <div id="div_indicador_@indexCard"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    qtdCards++;
+                    indexCard++;
+                }
+
+            </div>
+        }
+
+        @while (indexCard < (Corporativos?.Count ?? 0))
+        {
+
+            <div class="row" style="margin-right:0px; margin-left: 0px; margin-top: 20px">
+
+                @{int qtdCards = 0;}
+                @while (qtdCards <= 2 && indexCard < Corporativos.Count)
+                {
+                    <div class="col-md-4">
+                        <div class="card" style="padding-bottom: 0px">
+                            <h5>@Corporativos[indexCard].NomeIndicador</h5>
+                            <div class="card-body" style="padding:0">
+                                <small>Unidade de medida: @Corporativos[indexCard].UnidadeMedida</small><br/>
+                                <small>Percentual de peso: @Corporativos[indexCard].Peso</small><br/>
+                                <small>Meta: @Corporativos[indexCard].ValorMeta</small><br/>
+                                <small>Realizado: @Corporativos[indexCard].ValorRealizado</small><br/>
+                                <small>Atingimento: @Corporativos[indexCard].ValorAtingimento</small>
+                                <div class="table-responsive" style="align-items: center; justify-content: center; text-align: center; display: flex; width: auto;">
+                                    <div id="div_indicador_@indexCard"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    qtdCards++;
+                    indexCard++;
+                }
+
+            </div>
+        }
 
 	</div>
 		
@@ -41,11 +144,31 @@
 
 @code
 {
+    private UsuarioIndicadorLancamentosResultado usuarioResultados = null;
+    private IList<IndicadorLancamentosResultado> Apresentacao;
+    private IList<IndicadorLancamentosResultado> Corporativos;
+    private TextDateMonth mesAnoInicio;
+    private TextDateMonth mesAnoTermino;
     private ProjetoLookup lkpProjeto;
     private bool loaderVisible;
+    private int indexCard = 0;
+    private DateTime dataInicial = DateTime.Now.AddMonths(-2);
+    private DateTime dataFinal = DateTime.Now.AddMonths(-1);
     
     private IList<ProjetoEstruturaOrganizacionalArvore> itens = new List<ProjetoEstruturaOrganizacionalArvore>();
     private ProjetoEstruturaOrganizacionalArvore ArvoreSelected = null;
+
+    private async Task OnSelectMesAnoInicioAsync(byte mes, int ano)
+    {
+        dataInicial = new DateTime(ano, mes, 1);
+        await BuscarResultadosAsync();
+    }
+
+    private async Task OnSelectMesAnoTerminoAsync(byte mes, int ano)
+    {
+        dataFinal = new DateTime(ano, mes, 1);
+        await BuscarResultadosAsync();
+    }
 
     private async Task ChangeProjectAsync()
     {
@@ -93,7 +216,143 @@
     void OnChange(Radzen.TreeEventArgs args)
     {
         ArvoreSelected = (ProjetoEstruturaOrganizacionalArvore) args.Value;
-        ArvoreSelected.Expanded = true;
+        Task.Run(async () => await BuscarResultadosAsync());
+    }
+
+    private async Task BuscarResultadosAsync()
+    {
+        if (dataFinal.Month < dataInicial.Month && dataFinal.Year <= dataInicial.Year)
+        {
+            notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Warning, Summary = "Alerta", Detail = "A data de término não pode ser inferior a data de início.", Duration = 7000 });
+            StateHasChanged();
+            return;
+        }
+
+        indexCard = 0;
+        Apresentacao = null;
+        usuarioResultados = null;
+        Corporativos = null;
+        if (ArvoreSelected.Tipo == 7)
+        {
+            await BuscarResultadosPorIndicadorAsync();
+        }
+        else if (ArvoreSelected.Tipo == 6)
+        {
+            await BuscarResultadosPorUsuarioAsync();
+        }
+        else if (ArvoreSelected.Tipo == 1)
+        {
+            await BuscarResultadosPorProjetoAsync();
+        }
+    }
+
+    private async Task BuscarResultadosPorIndicadorAsync()
+    {
+        var http = await httpService.GetHttpAsync();
+        if (http != null)
+        {
+            var resultado = new IndicadorLancamentosResultado();
+            SetVisibleLoader(true);
+            try
+            {
+                long idIndicador = ArvoreSelected.IdIndicador.Value;
+                byte mesInicial = mesAnoInicio.GetMonth();
+                int anoInicial = mesAnoInicio.GetYear();
+                byte mesFinal = mesAnoTermino.GetMonth();
+                int anoFinal = mesAnoTermino.GetYear();
+                var response = await http.GetAsync($"indicador-lancamento/por-indicador/{lkpProjeto.GetValue()}/{idIndicador}/{mesInicial}/{anoInicial}/{mesFinal}/{anoFinal}");
+                if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
+                {
+                    throw new Exception(response.Content.ReadAsStringAsync().Result);
+                }
+                        
+                resultado = await httpService.GetObjectAsync<IndicadorLancamentosResultado>(response);
+                Apresentacao = new List<IndicadorLancamentosResultado>();
+                Apresentacao.Add(resultado);
+            }
+            catch (Exception exc)
+            {
+                Console.WriteLine(exc.Message);
+            }
+            SetVisibleLoader(false);
+            await js.InvokeVoidAsync("eval", resultado.Script);
+        }
+    }
+
+    private async Task BuscarResultadosPorUsuarioAsync()
+    {
+        var http = await httpService.GetHttpAsync();
+        if (http != null)
+        {
+            SetVisibleLoader(true);
+            try
+            {
+                long idUsuario = ArvoreSelected.IdUsuario.Value;
+                byte mesInicial = mesAnoInicio.GetMonth();
+                int anoInicial = mesAnoInicio.GetYear();
+                byte mesFinal = mesAnoTermino.GetMonth();
+                int anoFinal = mesAnoTermino.GetYear();
+                var response = await http.GetAsync($"indicador-lancamento/por-usuario/{ArvoreSelected.Id}/{idUsuario}/{mesInicial}/{anoInicial}/{mesFinal}/{anoFinal}");
+                if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
+                {
+                    throw new Exception(response.Content.ReadAsStringAsync().Result);
+                }
+                        
+                usuarioResultados = await httpService.GetObjectAsync<UsuarioIndicadorLancamentosResultado>(response);
+                Apresentacao = usuarioResultados.Indicadores;
+            }
+            catch (Exception exc)
+            {
+                Console.WriteLine(exc.Message);
+            }
+            SetVisibleLoader(false);
+            if (usuarioResultados != null)
+            {
+                foreach (var item in usuarioResultados.Indicadores)
+                {
+                    await js.InvokeVoidAsync("eval", item.Script);
+                }
+
+                await js.InvokeVoidAsync("eval", usuarioResultados.Script1);
+                await js.InvokeVoidAsync("eval", usuarioResultados.Script2);
+                await js.InvokeVoidAsync("eval", usuarioResultados.Script3);
+            }
+        }
+    }
+
+    private async Task BuscarResultadosPorProjetoAsync()
+    {
+        var http = await httpService.GetHttpAsync();
+        if (http != null)
+        {
+            SetVisibleLoader(true);
+            try
+            {
+                byte mesInicial = mesAnoInicio.GetMonth();
+                int anoInicial = mesAnoInicio.GetYear();
+                byte mesFinal = mesAnoTermino.GetMonth();
+                int anoFinal = mesAnoTermino.GetYear();
+                var response = await http.GetAsync($"indicador-lancamento/por-projeto/{lkpProjeto.GetValue()}/{mesInicial}/{anoInicial}/{mesFinal}/{anoFinal}");
+                if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
+                {
+                    throw new Exception(response.Content.ReadAsStringAsync().Result);
+                }
+                        
+                Corporativos = await httpService.GetObjectAsync<IList<IndicadorLancamentosResultado>>(response);
+            }
+            catch (Exception exc)
+            {
+                Console.WriteLine(exc.Message);
+            }
+            SetVisibleLoader(false);
+            if (Corporativos != null)
+            {
+                foreach (var item in Corporativos)
+                {
+                    await js.InvokeVoidAsync("eval", item.Script);
+                }
+            }
+        }
     }
 
     void Expandir(Radzen.TreeExpandEventArgs args)
@@ -102,7 +361,7 @@
         args.Children.Data = arv.Filhos;
         args.Children.Text = GetTextForNode;
         args.Children.Template = Template;
-        args.Children.Expanded = (i) => arv.Expanded;
+        args.Children.Expanded = (i) => false;
         Task.Run(async () => await js.InvokeVoidAsync("deleteCaretArvore"));
     }
 
@@ -181,4 +440,38 @@
         public IList<ProjetoEstruturaOrganizacionalArvore> Filhos { get; set; }
     }
 
+
+    public struct IndicadorLancamentosResultado
+    {
+        public string NomeIndicador { get; set; }
+
+        public string UnidadeMedida { get; set; }
+
+        public string Script { get; set; }
+
+        public decimal ValorMeta { get; set; }
+
+        public decimal ValorRealizado { get; set; }
+
+        public decimal ValorAtingimento { get; set; }
+
+        public decimal Peso { get; set; }
+    }
+
+    public class UsuarioIndicadorLancamentosResultado
+    {
+        public decimal ValorPonderadoIndividual { get; set; }
+
+        public decimal ValorPonderadoCorporativo { get; set; }
+
+        public decimal ValorPonderadoFinal { get; set; }
+
+        public string Script1 { get; set; }
+
+        public string Script2 { get; set; }
+
+        public string Script3 { get; set; }
+
+        public IList<IndicadorLancamentosResultado> Indicadores { get; set; }
+    }
 }
