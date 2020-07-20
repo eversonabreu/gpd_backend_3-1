@@ -106,6 +106,21 @@
             </div>
         }
 
+        @if (ArvoreSelected != null && ArvoreSelected.Tipo == 7 && lkpProjeto?.GetValueOrNull() != null)
+        {
+            <div class="row" style="margin-right:0px; margin-left: 0px; margin-top: 20px">
+                 <div class="col-md-10">
+                    <div class="card" style="padding-bottom: 0px">
+                        <div class="card-body" style="padding:0"> 
+                            <div class="table-responsive">
+                                <div id="div_indicador_grafico" style="width: 800px; height: 400px; overflow-y:hidden"></div>
+                            </div>
+                         </div>
+                    </div>
+                </div> 
+            </div>
+        }
+
         @while (indexCard < (Corporativos?.Count ?? 0))
         {
 
@@ -252,6 +267,7 @@
         if (http != null)
         {
             var resultado = new IndicadorLancamentosResultado();
+            string resultadoGrafico = null;
             SetVisibleLoader(true);
             try
             {
@@ -269,6 +285,15 @@
                 resultado = await httpService.GetObjectAsync<IndicadorLancamentosResultado>(response);
                 Apresentacao = new List<IndicadorLancamentosResultado>();
                 Apresentacao.Add(resultado);
+
+                response = await http.GetAsync($"indicador-lancamento/por-indicador-grafico/{lkpProjeto.GetValue()}/{idIndicador}/{mesInicial}/{anoInicial}/{mesFinal}/{anoFinal}");
+                if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
+                {
+                    throw new Exception(response.Content.ReadAsStringAsync().Result);
+                }
+
+                var ret = await httpService.GetObjectAsync<IndicadorGrafico>(response);
+                resultadoGrafico = ret.Script;
             }
             catch (Exception exc)
             {
@@ -276,6 +301,7 @@
             }
             SetVisibleLoader(false);
             await js.InvokeVoidAsync("eval", resultado.Script);
+            await js.InvokeVoidAsync("eval", resultadoGrafico);
         }
     }
 
@@ -473,5 +499,10 @@
         public string Script3 { get; set; }
 
         public IList<IndicadorLancamentosResultado> Indicadores { get; set; }
+    }
+
+    class IndicadorGrafico
+    {
+        public string Script { get; set; }
     }
 }
