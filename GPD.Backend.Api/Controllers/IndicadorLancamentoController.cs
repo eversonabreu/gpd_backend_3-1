@@ -64,6 +64,40 @@ namespace GPD.Backend.Api.Controllers
             return result;
         }
 
+        [Route("por-indicador-grafico/{idProjeto:long}/{idIndicador:long}/{mesInicial:int}/{anoInicial:int}/{mesFinal:int}/{anoFinal:int}"), HttpGet]
+        public IndicadorGrafico PorIndicadorGrafico(long idProjeto, long idIndicador, int mesInicial, int anoInicial, int mesFinal, int anoFinal)
+        {
+            var result = indicadorLancamentosService.ObterResultadosPorIndicadorEvolucaoMensalSimples(idProjeto, idIndicador, mesInicial, anoInicial, mesFinal, anoFinal);
+            string resultado = ObterScriptGrafico(result);
+            return new IndicadorGrafico { Script = resultado };
+        }
+
+        private string ObterScriptGrafico(IndicadorLancamentosEvolucaoMensal dados)
+        {
+            var list = new List<string>();
+            foreach (var item in dados.IndicadorEvolucaoMensalSimples)
+            {
+                string meta = item.ValorMeta.ToString(System.Globalization.CultureInfo.GetCultureInfo("en-US")).Replace(",", string.Empty);
+                string realizado = item.ValorRealizado.ToString(System.Globalization.CultureInfo.GetCultureInfo("en-US")).Replace(",", string.Empty);
+                string atingimento = item.ValorAtingimento.ToString(System.Globalization.CultureInfo.GetCultureInfo("en-US")).Replace(",", string.Empty);
+                list.Add($"['{item.Ocorrencia}', {meta}, {realizado}, {atingimento}]");
+            }
+            string valores = string.Join(',', list);
+            var builder = new System.Text.StringBuilder();
+            builder.AppendLine("google.charts.load('current', {'packages':['corechart'], 'language':'pt-BR'}); ");
+            builder.AppendLine("google.charts.setOnLoadCallback(drawVisualizationGr); ");
+            builder.AppendLine("function drawVisualizationGr() { ");
+            builder.AppendLine("var data = google.visualization.arrayToDataTable([ ");
+            builder.AppendLine($"['Month', 'Meta ({dados.UnidadeMedida})', 'Realizado ({dados.UnidadeMedida})', 'Atingimento (%)'], ");
+            builder.AppendLine($"{valores} ");
+            builder.AppendLine("]); ");
+            builder.AppendLine("var options = { ");
+            builder.AppendLine("title : 'NOME_INDICADOR (Evolução no período)', vAxis: {title: ''}, hAxis: {title: ''}, seriesType: 'bars', series: {2: {type: 'line'}} }; ".Replace("NOME_INDICADOR", dados.NomeIndicador));
+            builder.AppendLine("var chart = new google.visualization.ComboChart(document.getElementById('div_indicador_grafico')); ");
+            builder.AppendLine("chart.draw(data, options);}");
+            return builder.ToString();
+        }
+
         private string ObterScriptAtingimento(decimal valorAtingimento, string indexIndicador)
         {
             var range = new List<string>();
@@ -113,5 +147,10 @@ namespace GPD.Backend.Api.Controllers
             builder.AppendLine("chart.draw(data, options);}");
             return builder.ToString();
         }
+    }
+
+    public class IndicadorGrafico
+    {
+        public string Script { get; set; }
     }
 }

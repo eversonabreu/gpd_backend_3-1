@@ -328,25 +328,17 @@ namespace GPD.Backend.Domain.Services.Implementations
             var dataInicial = new DateTime(anoInicial, mesInicial, 1);
             var dataFinal = Utils.ObterDataNoUltimoDiaDoMes(mesFinal, anoFinal);
             var listaResultados = new List<Tuple<string, IndicadorLancamentosResultado>>();
-            var resultados = new List<Task>();
 
             while (dataInicial <= dataFinal)
             {
                 int mesReferencia = dataInicial.Month;
                 int anoReferencia = dataInicial.Year;
-                resultados.Add(Task.Run(async () =>
-                {
-                    var valores = ObterResultadosPorIndicador(idProjeto, idIndicador, mesReferencia, anoReferencia, mesReferencia, anoReferencia);
-                    string descricaoMesAbreviada = Utils.ObterAbreviacaoMes(mesReferencia);
-                    var tupla = new Tuple<string, IndicadorLancamentosResultado>($"{descricaoMesAbreviada}/{anoReferencia}", valores);
-                    listaResultados.Add(tupla);
-                    await Task.CompletedTask;
-                }));
-
+                var valores = ObterResultadosPorIndicador(idProjeto, idIndicador, mesReferencia, anoReferencia, mesReferencia, anoReferencia);
+                string descricaoMesAbreviada = Utils.ObterAbreviacaoMes(mesReferencia);
+                var tupla = new Tuple<string, IndicadorLancamentosResultado>($"{descricaoMesAbreviada}/{anoReferencia}", valores);
+                listaResultados.Add(tupla);
                 dataInicial = dataInicial.AddMonths(1);
             }
-
-            Task.WaitAll(resultados.ToArray());
 
             if (listaResultados.Any())
             {
