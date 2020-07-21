@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using GPD.Backend.Domain.IoC;
 using GPD.Backend.Domain.Services.Implementations;
 using Microsoft.AspNetCore.Mvc.Formatters;
+using System.Diagnostics;
 
 namespace GPD.Backend.Api
 {
@@ -22,6 +23,7 @@ namespace GPD.Backend.Api
 
         public Startup()
         {
+            Trace.WriteLine("GPD - Starting the application");
             const string nameVariableEnviroment = "GPD_ENVIRONMENT";
             var builder = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
@@ -38,7 +40,7 @@ namespace GPD.Backend.Api
             builder = builder.AddJsonFile($"appsettings.{environment}.json", optional: true);
             configuration = builder.Build();
 
-            Console.Out.WriteLine($"Connection in '{environment}'.");
+            Console.Out.WriteLine($"Connection in '{environment}'");
         }
 
         public void ConfigureServices(IServiceCollection services)
