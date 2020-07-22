@@ -189,6 +189,29 @@
             } catch {}
         }
 
+        function exibirRelatorioPdf(stringBase64, name) {
+            var strName = name.toString();
+            var base64Atob = atob(stringBase64.toString());
+            var byteNumbers = new Array(base64Atob.length);
+            
+            for (let i = 0; i < base64Atob.length; i++) {
+                byteNumbers[i] = base64Atob.charCodeAt(i);
+            }
+
+            var byteArray = new Uint8Array(byteNumbers);
+            var filePdf = new Blob([byteArray], {type: 'application/pdf'});
+            var filePdfUrl = window.URL.createObjectURL(filePdf);
+            var win = window.open(filePdfUrl);
+            win.window.URL.revokeObjectURL(filePdfUrl);
+
+            var encode = encodeURIComponent(stringBase64.toString());
+            var filePdfUrl2 = "data:application/pdf;base64," + encode;
+            var link = document.createElement('a');
+            link.href = filePdfUrl2;
+            link.download = "relatorio_" + strName + ".pdf";
+            link.click();
+        }
+
     </script>
     <script src="_content/Radzen.Blazor/Radzen.Blazor.js"></script>
     <script src="inputfile.js"></script>

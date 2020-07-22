@@ -1,0 +1,144 @@
+@page "/relatorio-indicador"
+@inject GpdFrontEnd.Services.System.HttpService httpService
+@inject NotificationService notificationService
+@inject NavigationManager navigation
+@inject IJSRuntime js
+@using GpdFrontEnd.Components.Lookups.Projeto
+@using GpdFrontEnd.Components.Lookups.NivelOrganizacional
+@using GpdFrontEnd.Components.Lookups.Indicador
+@using GpdFrontEnd.Components.Lookups.Usuario
+
+<nav class="navbar navbar-default navbar-fixed-top" style="height:56px; background-image: linear-gradient(180deg, #b0d2f7 100%, #007bff 0%); justify-content:center">
+    <button @onclick="GerarAsync" class="btn btn-info" style="width:200px; border-radius:0px"><span class="oi oi-circle-check"></span> Gerar relatório</button>
+</nav>
+
+<div class="card">
+    <div class="card-header">Filtros do relatório</div>
+    <div class="card-body">
+
+        <div class="row">
+            <div class="col-md-4">
+                <ProjetoLookup @ref="lkpProjeto" Label="Projeto" PlaceHolder="Selecione um projeto" />
+            </div>
+            <div class="col-md-4">
+                <IndicadorLookup @ref="lkpIndicador" Label="Indicador" PlaceHolder="Selecione um indicador" />
+            </div>
+            <div class="col-md-4">
+                <UsuarioLookup @ref="lkpUsuario" Label="Usuário" PlaceHolder="Selecione um usuário" />
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4">
+                <NivelOrganizacionalLookup @ref="lkpNivelCargo" Tipo="1" Label="Cargo" PlaceHolder="Selecione um cargo" />
+            </div>
+            <div class="col-md-4">
+                <TextDateMonth Readonly="true" Required="true" Value="dataInicial" Label="Mês/Ano (início)" Placeholder="Selecione o mês/ano de início" OnSelect="OnSelectMesAnoInicioAsync"/>
+            </div>
+            <div class="col-md-4">
+                <TextDateMonth Readonly="true" Required="true" Value="dataFinal" Label="Mês/Ano (término)" Placeholder="Selecione o mês/ano de término" OnSelect="OnSelectMesAnoTerminoAsync"/>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<Loader Visible="loaderVisible"/>
+
+@code
+{
+    private bool loaderVisible;
+    private DateTime dataInicial = DateTime.Now.AddMonths(-2);
+    private DateTime dataFinal = DateTime.Now.AddMonths(-1);
+    private ProjetoLookup lkpProjeto;
+    private IndicadorLookup lkpIndicador;
+    private UsuarioLookup lkpUsuario;
+    private NivelOrganizacionalLookup lkpNivelCargo;
+
+    private async Task OnSelectMesAnoInicioAsync(byte mes, int ano)
+    {
+        dataInicial = new DateTime(ano, mes, 1);
+        await Task.CompletedTask;
+    }
+
+    private async Task OnSelectMesAnoTerminoAsync(byte mes, int ano)
+    {
+        dataFinal = new DateTime(ano, mes, 1);
+        await Task.CompletedTask;
+    }
+
+    private async Task GerarAsync()
+    {
+        if (dataFinal.Month < dataInicial.Month && dataFinal.Year <= dataInicial.Year)
+        {
+            notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Warning, Summary = "Alerta", Detail = "A data de término não pode ser inferior a data de início.", Duration = 7000 });
+            StateHasChanged();
+            return;
+        }
+
+        if (lkpProjeto.GetValueOrNull() == null && lkpIndicador.GetValueOrNull() == null && lkpUsuario.GetValueOrNull() == null && lkpNivelCargo.GetValueOrNull() == null)
+        {
+            notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Warning, Summary = "Alerta", Detail = "Além das datas é necessário selecionar no mínimo mais um (1) filtro.", Duration = 7000 });
+            StateHasChanged();
+            return;
+        }
+
+        var filtro = new RelatorioFiltro 
+        {
+            IdProjeto = lkpProjeto.GetValueOrNull(),
+            IdIndicador = lkpIndicador.GetValueOrNull(),
+            IdUsuario = lkpUsuario.GetValueOrNull(),
+            IdCargo = lkpNivelCargo.GetValueOrNull(),
+            MesInicial = dataInicial.Month,
+            AnoInicial = dataInicial.Year,
+            MesFinal = dataFinal.Month,
+            AnoFinal = dataFinal.Year
+        };
+
+        var http = await httpService.GetHttpAsync();
+        if (http != null)
+        {
+            SetVisibleLoader(true);
+            try
+            {
+                var response = await http.PostAsJsonAsync("indicador-lancamento/relatorio-indicadores", filtro);
+                if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
+                {
+                    throw new Exception(response.Content.ReadAsStringAsync().Result);
+                }
+
+                var data = await httpService.GetObjectAsync<ReportDto>(response);
+                await js.InvokeVoidAsync("exibirRelatorioPdf", data.Base64, DateTime.Now.ToString("yyyyMMddHHmmssfff"));
+            }
+            catch (Exception exc)
+            {
+                Console.WriteLine(exc.Message);
+                notificationService.Notify(new NotificationMessage() { Severity = NotificationSeverity.Error, Summary = "Erro", Detail = "Um erro aconteceu ao carregar os dados.", Duration = 7000 });
+            }
+            SetVisibleLoader(false);
+        }
+    }
+
+    private void SetVisibleLoader(bool visible)
+    {
+        loaderVisible = visible;
+        StateHasChanged();
+    }
+
+    internal class RelatorioFiltro
+    {
+        public long? IdProjeto { get; set; }
+        public long? IdIndicador { get; set; }
+        public long? IdUsuario { get; set; }
+        public long? IdCargo { get; set; }
+        public int MesInicial { get; set; }
+        public int AnoInicial { get; set; }
+        public int MesFinal { get; set; }
+        public int AnoFinal { get; set; }
+    }
+
+    internal class ReportDto
+    {
+        public string Base64 { get; set; }
+    }
+}
