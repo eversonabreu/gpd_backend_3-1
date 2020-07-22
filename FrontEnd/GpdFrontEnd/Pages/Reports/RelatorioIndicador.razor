@@ -12,36 +12,37 @@
     <button @onclick="GerarAsync" class="btn btn-info" style="width:200px; border-radius:0px"><span class="oi oi-circle-check"></span> Gerar relatório</button>
 </nav>
 
-<div class="card">
-    <div class="card-header">Filtros do relatório</div>
-    <div class="card-body">
+    <div class="card">
+        <div class="card-header">Filtros do relatório</div>
+        <div class="card-body">
 
-        <div class="row">
-            <div class="col-md-4">
-                <ProjetoLookup @ref="lkpProjeto" Label="Projeto" PlaceHolder="Selecione um projeto" />
+            <div class="row" style="margin-right:0px; margin-left:0px">
+                <div class="col-md-4">
+                    <ProjetoLookup @ref="lkpProjeto" Label="Projeto" PlaceHolder="Selecione um projeto" />
+                </div>
+                <div class="col-md-4">
+                    <IndicadorLookup @ref="lkpIndicador" Label="Indicador" PlaceHolder="Selecione um indicador" />
+                </div>
+                <div class="col-md-4">
+                    <UsuarioLookup @ref="lkpUsuario" Label="Usuário" PlaceHolder="Selecione um usuário" />
+                </div>
             </div>
-            <div class="col-md-4">
-                <IndicadorLookup @ref="lkpIndicador" Label="Indicador" PlaceHolder="Selecione um indicador" />
+
+            <div class="row" style="margin-right:0px; margin-left:0px">
+                <div class="col-md-4">
+                    <NivelOrganizacionalLookup @ref="lkpNivelCargo" Tipo="1" Label="Cargo" PlaceHolder="Selecione um cargo" />
+                </div>
+                <div class="col-md-4">
+                    <TextDateMonth Readonly="true" Required="true" Value="dataInicial" Label="Mês/Ano (início)" Placeholder="Selecione o mês/ano de início" OnSelect="OnSelectMesAnoInicioAsync"/>
+                </div>
+                <div class="col-md-4">
+                    <TextDateMonth Readonly="true" Required="true" Value="dataFinal" Label="Mês/Ano (término)" Placeholder="Selecione o mês/ano de término" OnSelect="OnSelectMesAnoTerminoAsync"/>
+                </div>
             </div>
-            <div class="col-md-4">
-                <UsuarioLookup @ref="lkpUsuario" Label="Usuário" PlaceHolder="Selecione um usuário" />
-            </div>
+
         </div>
-
-        <div class="row">
-            <div class="col-md-4">
-                <NivelOrganizacionalLookup @ref="lkpNivelCargo" Tipo="1" Label="Cargo" PlaceHolder="Selecione um cargo" />
-            </div>
-            <div class="col-md-4">
-                <TextDateMonth Readonly="true" Required="true" Value="dataInicial" Label="Mês/Ano (início)" Placeholder="Selecione o mês/ano de início" OnSelect="OnSelectMesAnoInicioAsync"/>
-            </div>
-            <div class="col-md-4">
-                <TextDateMonth Readonly="true" Required="true" Value="dataFinal" Label="Mês/Ano (término)" Placeholder="Selecione o mês/ano de término" OnSelect="OnSelectMesAnoTerminoAsync"/>
-            </div>
-        </div>
-
     </div>
-</div>
+
 
 <Loader Visible="loaderVisible"/>
 

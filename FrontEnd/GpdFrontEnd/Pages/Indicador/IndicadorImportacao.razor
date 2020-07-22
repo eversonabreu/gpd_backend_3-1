@@ -58,7 +58,7 @@
 
 @if (lancamentos?.Any() ?? false)
 {
-    <div class="row" style="text-align: center">
+    <div class="row" style="text-align: center;margin-right:0px; margin-left:0px">
         <div class="col-md-8 mx-auto">
             <button @onclick="ImportarAsync" class="btn btn-info" style="width:120px; border-radius:0px"><span class="oi oi-arrow-circle-top"></span> Importar</button>
             &nbsp;&nbsp;
@@ -67,7 +67,7 @@
     </div>
 }
 
-<div class="row">
+<div class="row" style="margin-right:0px; margin-left:0px">
     <div class="col-md-8 mx-auto">
         <div class="drag-drop-zone">
             <InputFile OnChange="ViewFile"  />
@@ -76,25 +76,25 @@
     </div>
 </div>
 
-<div class="row" style="text-align:center !important">
+<div class="row" style="text-align:center !important;margin-right:0px; margin-left:0px">
     <div class="col-md-8 mx-auto">
         <small class="form-text text-muted">Utilize arquivos com extensão ".csv" ou ".txt" com no máximo 5MB</small>
     </div>
 </div>
 
-<div class="row" style="text-align:center !important">
+<div class="row" style="text-align:center !important;margin-right:0px; margin-left:0px">
     <div class="col-md-8 mx-auto">
         <small class="form-text text-muted">O delimitador deve ser ponto-e-virgula, e para separador decimal utilize virgula</small>
     </div>
 </div>
 
-<div class="row" style="text-align:center !important">
+<div class="row" style="text-align:center !important;margin-right:0px; margin-left:0px">
     <div class="col-md-8 mx-auto">
         <small class="form-text text-muted">O mês deve estar em formato numérico, com valor entre um (1) e doze (12)</small>
     </div>
 </div>
 
-<div class="row" style="text-align:center !important">
+<div class="row" style="text-align:center !important;margin-right:0px; margin-left:0px">
     <div class="col-md-8 mx-auto">
         <small class="form-text text-muted">A ordem dos campos deve ser: "ID do Projeto, Identificador, Ano, Mês, Valor da Meta, Valor do Realizado"</small>
     </div>
