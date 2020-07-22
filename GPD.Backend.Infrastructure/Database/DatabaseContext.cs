@@ -61,7 +61,6 @@ namespace GPD.Backend.Infrastructure.Database
 
         public static string GetDatabaseStringConnection(IConfiguration configuration)
         {
-            return "Server=tcp:gpd-amostra-database.database.windows.net,1433;Initial Catalog=gpd-amostra-database;Persist Security Info=True;User ID=gpd;Password=Ean@394581;MultipleActiveResultSets=True;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;";
             string connectionDatabaseStringBase = configuration["DatabaseConnection"];
             string userId = configuration["DatabaseConnectionSettings:UserId"];
             string password = configuration["DatabaseConnectionSettings:Password"];
