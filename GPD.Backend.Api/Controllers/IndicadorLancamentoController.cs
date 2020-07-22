@@ -1,5 +1,6 @@
 ﻿using GPD.Backend.Api.Controllers.Base;
 using GPD.Backend.Domain.Entities;
+using GPD.Backend.Domain.Reports;
 using GPD.Backend.Domain.Repositories;
 using GPD.Backend.Domain.Services.Contracts;
 using GPD.Commom.Models;
@@ -70,6 +71,16 @@ namespace GPD.Backend.Api.Controllers
             var result = indicadorLancamentosService.ObterResultadosPorIndicadorEvolucaoMensalSimples(idProjeto, idIndicador, mesInicial, anoInicial, mesFinal, anoFinal);
             string resultado = ObterScriptGrafico(result);
             return new IndicadorGrafico { Script = resultado };
+        }
+
+        [Route("relatorio-indicadores"), HttpPost]
+        public ReportDto RelatorioIndicadores([FromBody] RelatorioFiltro filtro)
+        {
+            //System.Diagnostics.Debugger.Launch();
+            var resultados = indicadorLancamentosService.GerarResultadosParaRelatorio(filtro);
+            var relatorio = new IndicadoresReport(resultados);
+            var result = relatorio.GetPdf();
+            return result;
         }
 
         private string ObterScriptGrafico(IndicadorLancamentosEvolucaoMensal dados)
@@ -151,6 +162,6 @@ namespace GPD.Backend.Api.Controllers
 
     public class IndicadorGrafico
     {
-        public string Script { get; set; }
+        public string Script { get; set; } = string.Empty;
     }
 }

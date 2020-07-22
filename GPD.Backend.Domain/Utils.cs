@@ -47,5 +47,25 @@ namespace GPD.Backend.Domain
                 _ => throw new Exception($"Mês: {mes} é inválido."),
             };
         }
+
+        public static string ObterDescricaoMes(int mes)
+        {
+            return mes switch
+            {
+                1 => "Janeiro",
+                2 => "Fevereiro",
+                3 => "Março",
+                4 => "Abril",
+                5 => "Maio",
+                6 => "Junho",
+                7 => "Julho",
+                8 => "Agosto",
+                9 => "Setembro",
+                10 => "Outubro",
+                11 => "Novembro",
+                12 => "Dezembro",
+                _ => throw new Exception($"Mês: {mes} é inválido."),
+            };
+        }
     }
 }

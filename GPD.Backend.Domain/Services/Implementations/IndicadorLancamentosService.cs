@@ -377,6 +377,102 @@ namespace GPD.Backend.Domain.Services.Implementations
 
             return result;
         }
+
+        public IndicadorResultadosRelatorio GerarResultadosParaRelatorio(RelatorioFiltro filtro)
+        {
+            string descricaoMesInicialAbreviada = Utils.ObterDescricaoMes(filtro.MesInicial);
+            string descricaoMesFinalAbreviada = Utils.ObterDescricaoMes(filtro.MesFinal);
+            string periodo = $"Período: {descricaoMesInicialAbreviada}/{filtro.AnoInicial} à {descricaoMesFinalAbreviada}/{filtro.AnoFinal}";
+
+            var resultado = new IndicadorResultadosRelatorio {Periodo = periodo,  Projetos = new List<IndicadorResultadosRelatorioProjeto>() };
+            var lancamentos = indicadorLancamentoRepository.ObterLancamentosParaRelatorio(filtro);
+            if (lancamentos.Any())
+            {
+                var listaDeProjetos = lancamentos.Select(item => item.IdProjeto).Distinct().ToList();
+                int listaDeProjetoCount = listaDeProjetos.Count();
+                for (int indexProjeto = 0; indexProjeto < listaDeProjetoCount; indexProjeto++)
+                {
+                    long idProjeto = listaDeProjetos[indexProjeto];
+                    string nomeProjeto = lancamentos.First(item => item.IdProjeto == idProjeto).NomeProjeto;
+
+                    resultado.Projetos.Add(new IndicadorResultadosRelatorioProjeto
+                    {
+                        IdProjeto = idProjeto,
+                        NomeProjeto = nomeProjeto,
+                        Cargos = new List<IndicadorResultadosRelatorioCargo>()
+                    });
+
+                    var listaDeCargos = lancamentos.Where(item => item.IdProjeto == idProjeto).Select(subItem => subItem.IdCargo).Distinct().ToList();
+                    int listaDeCargosCount = listaDeCargos.Count();
+
+                    for (int indexCargo = 0; indexCargo < listaDeCargosCount; indexCargo++)
+                    {
+                        long idCargo = listaDeCargos[indexCargo];
+                        string nomeCargo = lancamentos.First(item => item.IdProjeto == idProjeto && item.IdCargo == idCargo).NomeCargo;
+
+                        resultado.Projetos[indexProjeto].Cargos.Add(new IndicadorResultadosRelatorioCargo
+                        {
+                            Cargo = nomeCargo,
+                            Usuarios = new List<IndicadorResultadosRelatorioUsuario>()
+                        });
+
+                        var listaDeUsuarios = lancamentos.Where(item => item.IdProjeto == idProjeto && item.IdCargo == idCargo).Select(subItem => subItem.IdUsuario).Distinct().ToList();
+                        int listaDeUsuariosCount = listaDeUsuarios.Count();
+                        for (int indexUsuario = 0; indexUsuario < listaDeUsuariosCount; indexUsuario++)
+                        {
+                            long idUsuario = listaDeUsuarios[indexUsuario];
+                            var usuario = lancamentos.First(item => item.IdProjeto == idProjeto && item.IdCargo == idCargo && item.IdUsuario == idUsuario);
+                            var ponderados = ObterResultadosParaUsuario(usuario.IdSuperior, usuario.IdUsuario, filtro.MesInicial, filtro.AnoInicial, filtro.MesFinal, filtro.AnoFinal);
+
+                            resultado.Projetos[indexProjeto].Cargos[indexCargo].Usuarios.Add(new IndicadorResultadosRelatorioUsuario
+                            {
+                                Usuario = usuario.NomeUsuario,
+                                Indicadores = new List<IndicadorResultadosRelatorioIndicador>(),
+                                PonderadoInvidual = ponderados.ValorPonderadoIndividual,
+                                PonderadoCorporativo = ponderados.ValorPonderadoCorporativo,
+                                PonderadoFinal = ponderados.ValorPonderadoFinal
+                            });
+
+                            var listaDeIndicadores = lancamentos.Where(item => item.IdProjeto == idProjeto && item.IdCargo == idCargo && item.IdUsuario == idUsuario).Select(subItem => subItem.IdIndicador).Distinct().ToList();
+                            int listaDeIndicadoresCount = listaDeIndicadores.Count();
+                            for (int indexIndicador = 0; indexIndicador < listaDeIndicadoresCount; indexIndicador++)
+                            {
+                                long idIndicador = listaDeIndicadores[indexIndicador];
+                                var indicador = lancamentos.First(item => item.IdProjeto == idProjeto && item.IdCargo == idCargo && item.IdUsuario == idUsuario && item.IdIndicador == idIndicador);
+                                var valoresIndicador = ObterResultadosPorIndicador(idProjeto, idIndicador, filtro.MesInicial, filtro.AnoInicial, filtro.MesFinal, filtro.AnoFinal);
+
+                                resultado.Projetos[indexProjeto].Cargos[indexCargo].Usuarios[indexUsuario].Indicadores.Add(new IndicadorResultadosRelatorioIndicador
+                                {
+                                    Identificador = indicador.Identificador,
+                                    Lancamentos = new List<IndicadorResultadosRelatorioLancamento>(),
+                                    NomeIndicador = indicador.NomeIndicador,
+                                    UnidadeMedida = indicador.UnidadeMedida,
+                                    ValorAtingimento = valoresIndicador.ValorAtingimento,
+                                    ValorMetaCalculado = valoresIndicador.ValorMeta,
+                                    ValorPercentualCriterio = indicador.ValorPercentualCriterio,
+                                    ValorPercentualPeso = indicador.ValorPercentualPeso,
+                                    ValorRealizadoCalculado = indicador.ValorRealizado
+                                });
+
+                                var lancamentosDoIndicador = lancamentos.Where(item => item.IdProjeto == idProjeto && item.IdCargo == idCargo && item.IdUsuario == idUsuario && item.IdIndicador == idIndicador).OrderBy(it => it.Ano).ThenBy(ti => ti.Mes);
+                                foreach (var item in lancamentosDoIndicador)
+                                {
+                                    resultado.Projetos[indexProjeto].Cargos[indexCargo].Usuarios[indexUsuario].Indicadores[indexIndicador].Lancamentos.Add(new IndicadorResultadosRelatorioLancamento
+                                    {
+                                        Ano = item.Ano,
+                                        Mes = Utils.ObterDescricaoMes(item.Mes),
+                                        ValorMeta = item.ValorMeta,
+                                        ValorRealizado = item.ValorRealizado
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            return resultado;
+        }
     }
 
     internal class Lancamentos
