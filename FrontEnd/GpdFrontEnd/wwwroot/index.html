@@ -13,26 +13,31 @@
     <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png" />
     <link rel="stylesheet" href="_content/Radzen.Blazor/css/default-base.css"> 
     <link href="_content/Blazored.Modal/blazored-modal.css" rel="stylesheet" />
-</head>
 
-<body id="bodyApp" style="background-color:#b0d2f7" onload="showLogin()">
-    <app>Aguarde, o sistema está sendo iniciado...</app>
-
-    <div id="blazor-error-ui">
-        Um erro inesperado aconteceu. Tente atualizar esta página, se o problema persistir entre em contato com a equipe de suporte do sistema.
-        <a href="" class="reload">Atualizar esta página</a>
-    </div>
-    <script src="_framework/blazor.webassembly.js"></script>
-    <script>try{navigator.serviceWorker.register('service-worker.js');}catch{}</script>
     <script>
         function showLogin() {
             if (window.location.pathname === '/login/account') {
                 document.getElementById('bodyApp').style.backgroundColor = '#007bff';
             }
         }
+    </script>
+</head>
+
+<body id="bodyApp" style="background-color:#b0d2f7" onload="showLogin()">
+    <app><h3>Aguarde um instante...    </h3><h4>Use o Chrome ou Edge. (É recomendável que seu navegador esteja sempre atualizado)</h4></app>
+
+    <div id="blazor-error-ui">
+        Um erro inesperado aconteceu. Tente atualizar esta página, se o problema persistir entre em contato com a equipe de suporte do sistema.
+        <a href="" class="reload">Atualizar esta página</a>
+    </div>
+    <script src="_framework/blazor.webassembly.js"></script>
+    <script>
 
         function removeShowLogin() {
             document.getElementById('bodyApp').style.backgroundColor = '#b0d2f7';
+            try {
+                navigator.serviceWorker.register('service-worker.js');
+            } catch (err) {}
         }
 
         function mascaraCpf(i) {
@@ -57,7 +62,7 @@
 
         function adicionarIndicadorFormula(identificador) {
             var obj = document.getElementById('iptIdentificador');
-            
+
             for (var index = obj.selectionStart; index < obj.value.length; index++) {
                 if (obj.value[index] === ']') {
                     event.preventDefault();
@@ -68,14 +73,14 @@
                     break;
                 }
             }
-            
+
             var first = obj.value.substring(0, obj.selectionStart);
             var last = obj.value.substring(obj.selectionStart, obj.value.length);
             var newValue = first + identificador;
             obj.value = newValue + last;
             obj.setSelectionRange(newValue.length, newValue.length);
             obj.focus();
-	    }
+        }
 
         function onkeyDownFormulaIndicador(obj, event) {
 
@@ -83,21 +88,21 @@
                 event.preventDefault();
                 event.stopPropagation();
                 return;
-		    }
-		
+            }
+
             if (event.key === 'Backspace' && obj.selectionStart !== obj.selectionEnd) {
                 event.preventDefault();
                 event.stopPropagation();
                 return;
             }
-            
+
             if (event.key === 'Backspace') {
                 if (obj.value[obj.selectionStart - 1] === ']') {
                     var newStart = obj.selectionStart - 1;
                     while (newStart > -1 && obj.value[newStart] !== '[') {
                         newStart--;
                     }
-                    
+
                     var newValue = '';
                     if (newStart > 0) {
                         newValue = obj.value.substring(0, newStart) + obj.value.substr(obj.selectionStart);
@@ -108,10 +113,10 @@
                         event.preventDefault();
                         event.stopPropagation();
                     }
-                    
+
                     obj.value = newValue;
                     obj.setSelectionRange(newStart, newStart);
-                    
+
                 } else {
                     for (var index = obj.selectionStart; index < obj.value.length; index++) {
                         if (obj.value[index] === ']') {
@@ -124,21 +129,21 @@
                     }
                 }
             } else if (event.key != 'ArrowLeft' && event.key != 'ArrowRight') {
-				for (var index = obj.selectionStart; index < obj.value.length; index++) {
-					if (obj.value[index] === ']') {
-						event.preventDefault();
-						event.stopPropagation();
-						break;
-					} else if (obj.value[index] === '[') {
-						break;
-					}
-				}
-		    }
+                for (var index = obj.selectionStart; index < obj.value.length; index++) {
+                    if (obj.value[index] === ']') {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        break;
+                    } else if (obj.value[index] === '[') {
+                        break;
+                    }
+                }
+            }
         }
 
         function permiteCaracterFormulaIndicador(event) {
 
-            if (event.key == '0' || 
+            if (event.key == '0' ||
                 event.key == '1' ||
                 event.key == '2' ||
                 event.key == '3' ||
@@ -179,20 +184,20 @@
                         }
                     }
                 }
-            } catch {}
+            } catch (err) { }
         }
 
         function exibirRelatorioPdf(stringBase64, name) {
             var strName = name.toString();
             var base64Atob = atob(stringBase64.toString());
             var byteNumbers = new Array(base64Atob.length);
-            
+
             for (let i = 0; i < base64Atob.length; i++) {
                 byteNumbers[i] = base64Atob.charCodeAt(i);
             }
 
             var byteArray = new Uint8Array(byteNumbers);
-            var filePdf = new Blob([byteArray], {type: 'application/pdf'});
+            var filePdf = new Blob([byteArray], { type: 'application/pdf' });
             var filePdfUrl = window.URL.createObjectURL(filePdf);
             var win = window.open(filePdfUrl);
             win.window.URL.revokeObjectURL(filePdfUrl);
