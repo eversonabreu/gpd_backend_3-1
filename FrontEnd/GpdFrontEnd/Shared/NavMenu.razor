@@ -15,7 +15,7 @@ else
 }
 
 <div class="top-row pl-4 navbar navbar-dark" style="text-align:center;@(mostrarMenu ? "padding-left: 5px !important; padding-right: 6px !important" : null)">
-    <div class="pcssc-popover">
+    <div class="pcssc-popover" style="z-index:9999999 !important">
         <div tabindex="0" class="pure-button popover-toggle popover-toggle-dismissable popover-dismissable-right">
             <div style="margin-top:-2px;width:47px;height:45px;border-radius:50%;border: 2px solid #007bf7" @onclick="@(() => mostrarMenu = false)">
                 <span class="oi oi-person" style="margin-top:8px;margin-left:0px;color: white;font-size:20px;"></span>
@@ -108,13 +108,13 @@ else
                     </li>
                 </ul>
 
-                <ul class="nav flex-column">
+                @* <ul class="nav flex-column">
                     <li class="nav-item px-3" style="padding-top: 5px; padding-bottom: 0px">
                         <NavLink class="nav-link" href="perfil-usuario">
                             <span class="oi oi-people" aria-hidden="true"></span> Perfil de Usuário
                         </NavLink>
                     </li>
-                </ul>
+                </ul> *@
 
                 <ul class="nav flex-column">
                     <li class="nav-item px-3" style="padding-top: 5px; padding-bottom: 0px">

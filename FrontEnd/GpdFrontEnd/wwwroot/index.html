@@ -16,7 +16,7 @@
 </head>
 
 <body id="bodyApp" style="background-color:#b0d2f7" onload="showLogin()">
-    <app></app>
+    <app>Aguarde, o sistema está sendo iniciado...</app>
 
     <div id="blazor-error-ui">
         Um erro inesperado aconteceu. Tente atualizar esta página, se o problema persistir entre em contato com a equipe de suporte do sistema.
@@ -48,13 +48,6 @@
             if (v.length == 3 || v.length == 7) i.value += ".";
             if (v.length == 11) i.value += "-";
 
-        }
-
-        function focus(name) {
-            var interval = setInterval(function () {
-                clearInterval(interval);
-                document.getElementById(name).focus();
-            }, 1);
         }
 
         function obterIndicadorFormula() {

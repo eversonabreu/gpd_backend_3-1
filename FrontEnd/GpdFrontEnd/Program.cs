@@ -17,8 +17,8 @@ namespace GpdFrontEnd
         {
             var builder = WebAssemblyHostBuilder.CreateDefault(args);
             builder.RootComponents.Add<App>("app");
-            builder.Services.AddTransient(sp => new HttpClient { BaseAddress = new Uri("http://192.168.185.151:5020/") });
-            //builder.Services.AddTransient(sp => new HttpClient { BaseAddress = new Uri("http://gpd-amostra-backend.azurewebsites.net/") });
+            //builder.Services.AddTransient(sp => new HttpClient { BaseAddress = new Uri("http://192.168.185.151:5020/") });
+            builder.Services.AddTransient(sp => new HttpClient { BaseAddress = new Uri("http://gpd-amostra-backend.azurewebsites.net/") });
             builder.Services.AddBlazoredSessionStorage();
             builder.Services.AddScoped<Session>();
             builder.Services.AddScoped<HttpService>();

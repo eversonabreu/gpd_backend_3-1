@@ -145,16 +145,6 @@
         return string.Empty;
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            await jsRuntime.InvokeVoidAsync("focus", "cpfLogin");
-        }
-
-        await base.OnAfterRenderAsync(firstRender);
-    }
-
     protected override async Task OnInitializedAsync()
     {
         if (string.IsNullOrWhiteSpace(Text))
