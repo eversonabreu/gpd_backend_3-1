@@ -90,6 +90,8 @@
                             <div class="card-body" style="padding:0">
                                 <small>Unidade de medida: @Apresentacao[indexCard].UnidadeMedida</small><br/>
                                 <small>Percentual de peso: @Apresentacao[indexCard].Peso</small><br/>
+								<small>Percentual de critério: @Apresentacao[indexCard].Criterio</small><br/>
+								<small>Possui cardinalidade: @(Apresentacao[indexCard].Cardinalidade ? "Sim" : "Não")</small><br/>
                                 <small>Meta: @Apresentacao[indexCard].ValorMeta</small><br/>
                                 <small>Realizado: @Apresentacao[indexCard].ValorRealizado</small><br/>
                                 <small>Atingimento: @Apresentacao[indexCard].ValorAtingimento</small>
@@ -481,6 +483,10 @@
         public decimal ValorAtingimento { get; set; }
 
         public decimal Peso { get; set; }
+		
+		public decimal Criterio { get; set; }
+		
+		public bool Cardinalidade { get; set; }
     }
 
     public class UsuarioIndicadorLancamentosResultado

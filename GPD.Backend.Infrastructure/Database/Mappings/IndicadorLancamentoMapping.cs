@@ -34,7 +34,7 @@ namespace GPD.Backend.Infrastructure.Database.Mappings
 
             builder.HasIndex(bld => new { bld.IdProjeto }).HasName("UkIndicadorLancamentoPro");
             builder.HasIndex(bld => new { bld.IdProjeto, bld.IdIndicador}).HasName("UkIndicadorLancamentoProIn");
-            builder.HasIndex(bld => new { bld.IdProjeto, bld.IdIndicador, bld.Mes, bld.Ano}).HasName("UkIndicadorLancamento").IsUnique();
+            builder.HasIndex(bld => new { bld.IdProjeto, bld.IdIndicador, bld.Ano, bld.Mes}).HasName("UkIndicadorLancamento").IsUnique();
         }
     }
 }

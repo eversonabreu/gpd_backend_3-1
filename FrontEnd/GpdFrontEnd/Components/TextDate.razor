@@ -18,7 +18,7 @@
                             <div class="form-group">
                                 <label>Ano</label>
                                 <select class="form-control" @onblur="OnBlur" @bind="ano" @onclick="OnSelectAno">
-                                    @for (int ano = 2015; ano < (DateTime.Now.Year + 20); ano++)
+                                    @for (int ano = 2010; ano < (DateTime.Now.Year + 20); ano++)
                                     {
                                         <option value="@ano">@ano</option>
                                     }
@@ -186,7 +186,7 @@
                         throw new FormatException();
                     }
 
-                    if (ano < 2015 || ano > DateTime.MaxValue.Year)
+                    if (ano < 2010 || ano > DateTime.MaxValue.Year)
                     {
                         throw new Exception();
                     }

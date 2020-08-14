@@ -218,7 +218,9 @@ namespace GPD.Backend.Domain.Services.Implementations
                 ValorAtingimento = valorAtingimento,
                 ValorMeta = valorMeta,
                 ValorRealizado = valorRealizado,
-                Peso = indicador.ValorPercentualPeso
+                Peso = indicador.ValorPercentualPeso,
+				Criterio = indicador.ValorPercentualCriterio,
+				Cardinalidade = indicador.PossuiCardinalidade
             };
         }
 

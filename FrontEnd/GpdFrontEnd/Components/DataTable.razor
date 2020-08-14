@@ -7,7 +7,7 @@
 </style>
 
 <div class="table-responsive">
-    <div class="card">
+    <div class="card" style="width: @Width">
 
         @if (Label != null)
         {
@@ -198,6 +198,9 @@
 
     [Parameter]
     public string Label { get; set; }
+	
+	[Parameter]
+    public string Width { get; set; } = "auto";
 
     private bool SemDadosParaExibir;
 

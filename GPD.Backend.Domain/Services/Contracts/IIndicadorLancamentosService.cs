@@ -31,6 +31,10 @@ namespace GPD.Backend.Domain.Services.Contracts
         public decimal ValorAtingimento { get; set; }
 
         public decimal Peso { get; set; }
+		
+		public decimal Criterio { get; set; }
+		
+		public bool Cardinalidade { get; set; }
     }
 
     public struct UsuarioIndicadorLancamentosResultado
